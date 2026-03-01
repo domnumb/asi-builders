@@ -2,7 +2,7 @@
 ASI Builders Leaderboard — Configuration
 """
 
-# Repos tracked (24 top ASI-oriented open source projects)
+# Repos tracked (21 top ASI-oriented open source projects)
 TRACKED_REPOS = [
     # Anthropic ecosystem
     "anthropics/anthropic-sdk-python",
@@ -26,16 +26,16 @@ TRACKED_REPOS = [
     # Tooling & evals
     "brainlid/langchain",
     "BerriAI/litellm",
-    "arc-evals/arc-evals",
     "EleutherAI/lm-evaluation-harness",
     # Safety & alignment
     "anthropics/evals",
-    "openai/safety-eval",
-    "alignmentforum/alignmentforum",
     # Infra
     "vllm-project/vllm",
     "ggerganov/llama.cpp",
 ]
+
+# Skip fetching individual commit line stats (saves ~2,000-5,000 API calls)
+FETCH_LINE_STATS = False
 
 # Time window for scraping (days)
 SCRAPE_WINDOW_DAYS = 7
@@ -49,8 +49,8 @@ Stats (last 7 days):
 - Commits: {commits}
 - PRs merged: {prs_merged}
 - Issues closed: {issues_closed}
-- Code lines added: {lines_added}
-- Code lines deleted: {lines_deleted}
+- Code lines added: {lines_added} (0 = not available)
+- Code lines deleted: {lines_deleted} (0 = not available)
 - PR review comments: {review_comments}
 
 Score each dimension from 0 to 10 (integer only):

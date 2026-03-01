@@ -10,7 +10,7 @@ from collections import defaultdict
 
 import requests
 
-from config import TRACKED_REPOS, SCRAPE_WINDOW_DAYS
+from config import TRACKED_REPOS, SCRAPE_WINDOW_DAYS, FETCH_LINE_STATS
 
 logger = logging.getLogger(__name__)
 
@@ -86,12 +86,12 @@ def scrape_repo(repo: str, since: datetime) -> dict[str, dict]:
         if author in ("unknown", "", None):
             continue
         stats[author]["commits"] += 1
-        # lines: requires individual commit detail
-        detail = _get(f"{GITHUB_API}/repos/{repo}/commits/{c['sha']}")
-        if isinstance(detail, dict):
-            s = detail.get("stats", {})
-            stats[author]["lines_added"] += s.get("additions", 0)
-            stats[author]["lines_deleted"] += s.get("deletions", 0)
+        if FETCH_LINE_STATS:
+            detail = _get(f"{GITHUB_API}/repos/{repo}/commits/{c['sha']}")
+            if isinstance(detail, dict):
+                s = detail.get("stats", {})
+                stats[author]["lines_added"] += s.get("additions", 0)
+                stats[author]["lines_deleted"] += s.get("deletions", 0)
 
     # --- Merged PRs ---
     prs = _paginate(

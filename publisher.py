@@ -17,7 +17,7 @@ from db import get_top_builders, get_badge, save_publication, mark_published
 
 logger = logging.getLogger(__name__)
 
-LEADERBOARD_URL = "https://github.com/maelvanderlinden/asi-builders"
+LEADERBOARD_URL = "https://github.com/domnumb/asi-builders"
 
 
 def _format_ranking_linkedin(builders: list[dict], rank_offset: int = 1) -> str:
@@ -53,7 +53,7 @@ def _format_ranking_newsletter(builders: list[dict], rank_offset: int = 1) -> st
 
 
 def _week_label() -> str:
-    return datetime.utcnow().strftime("Week of %b %d, %Y")
+    return datetime.utcnow().strftime("%b %d, %Y")
 
 
 def generate_linkedin_post(week_start: str) -> str:
