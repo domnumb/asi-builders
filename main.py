@@ -27,6 +27,7 @@ from db import init_db, upsert_contributor, upsert_score, get_top_builders, get_
 from scraper import scrape_all
 from evaluator import evaluate_all
 from publisher import publish
+from site_generator import generate_site
 
 logging.basicConfig(
     level=logging.INFO,
@@ -109,11 +110,17 @@ def cmd_status():
         )
 
 
+def cmd_site():
+    """Generate static site into _site/."""
+    generate_site()
+
+
 def cmd_run():
-    """Full pipeline: scrape → evaluate → publish."""
+    """Full pipeline: scrape → evaluate → publish → site."""
     scrape_results = cmd_scrape()
     cmd_evaluate(scrape_results)
     cmd_publish()
+    cmd_site()
 
 
 def main():
@@ -122,7 +129,7 @@ def main():
     parser = argparse.ArgumentParser(description="ASI Builders Leaderboard")
     parser.add_argument(
         "command",
-        choices=["run", "scrape", "evaluate", "publish", "preview", "status"],
+        choices=["run", "scrape", "evaluate", "publish", "preview", "status", "site"],
         help="Command to execute",
     )
     args = parser.parse_args()
@@ -134,6 +141,7 @@ def main():
         "publish": cmd_publish,
         "preview": lambda: cmd_publish(dry_run=True),
         "status": cmd_status,
+        "site": cmd_site,
     }
     commands[args.command]()
 

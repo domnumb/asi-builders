@@ -7,7 +7,8 @@ python main.py scrape      # GitHub scrape (~2-3 min)
 python main.py evaluate    # Haiku scoring (~$0.20)
 python main.py preview     # Dry-run output
 python main.py status      # Top 10 leaderboard
-python main.py run         # Full pipeline
+python main.py site        # Generate static site → _site/
+python main.py run         # Full pipeline (scrape+eval+publish+site)
 ```
 
 ## Key files
@@ -17,6 +18,7 @@ python main.py run         # Full pipeline
 - `evaluator.py` — Anthropic Haiku calls
 - `publisher.py` — LinkedIn + newsletter formatting
 - `db.py` — SQLite (asi_builders.db)
+- `site_generator.py` — Static site generator → `_site/`
 
 ## Conventions
 
