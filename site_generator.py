@@ -15,7 +15,7 @@ import shutil
 from pathlib import Path
 from datetime import datetime, timedelta
 
-from db import get_conn, get_badge, get_previous_week_ranks, get_builder_history, get_trending_repos, get_total_contributors
+from db import get_conn, get_badge, get_previous_week_ranks, get_builder_history, get_trending_repos, get_total_contributors, get_builder_evolution, get_builder_rank_in_week
 from config import TRACKED_REPOS, SCORE_WEIGHTS, BADGES
 
 logger = logging.getLogger(__name__)
@@ -132,6 +132,145 @@ def _render_history_section(username: str) -> str:
     <h2 class="section-title">Score history ({len(history)} weeks)</h2>
     {sparkline}
     <div class="spark-labels"><span>{oldest}</span><span>{newest}</span></div>
+  </div>"""
+
+
+# ─── Achievements & Evolution ─────────────────────────────
+
+def _compute_achievements(evo: dict, rank: int, total: int) -> list[dict]:
+    """Compute gamification achievements from evolution data."""
+    achievements = []
+    streak = evo.get("streak", 0)
+    weeks = evo.get("weeks_present", 0)
+    delta = evo.get("delta")
+    best = evo.get("best_week")
+    current = evo.get("current")
+
+    # First week
+    if weeks == 1:
+        achievements.append({"icon": "🚀", "label": "First Week", "desc": "Welcome to the leaderboard!"})
+
+    # Streak
+    if streak >= 2:
+        achievements.append({"icon": "🔥", "label": f"{streak}-Week Streak", "desc": f"Active {streak} weeks in a row"})
+
+    # Top 10
+    if rank <= 10:
+        achievements.append({"icon": "🏆", "label": "Top 10", "desc": f"Ranked #{rank} this week"})
+    elif rank <= 50:
+        achievements.append({"icon": "⭐", "label": "Top 50", "desc": f"Ranked #{rank} this week"})
+
+    # Climber — rank improved
+    if delta:
+        prev_rank = get_builder_rank_in_week(current["repos"].split(",")[0] if current else "", "")  # not needed, use prev_ranks
+        # Score went up
+        if delta["score"] > 0.5:
+            achievements.append({"icon": "📈", "label": "Score Up", "desc": f"+{delta['score']:.1f} points vs last week"})
+        elif delta["score"] < -0.5:
+            achievements.append({"icon": "📉", "label": "Score Dip", "desc": f"{delta['score']:.1f} points vs last week"})
+
+        # More commits
+        if delta["commits"] > 0:
+            achievements.append({"icon": "⚡", "label": "More Active", "desc": f"+{delta['commits']} commits vs last week"})
+
+        # New repos
+        new_repos = evo.get("new_repos", set())
+        if new_repos:
+            names = ", ".join(r.split("/")[-1] for r in list(new_repos)[:3])
+            achievements.append({"icon": "🌐", "label": "Expanding", "desc": f"New repo{'s' if len(new_repos) > 1 else ''}: {names}"})
+
+    # Personal best
+    if best and current and current["avg_composite"] >= best["avg_composite"] - 0.01 and weeks > 1:
+        achievements.append({"icon": "👑", "label": "Personal Best", "desc": f"Highest score ever: {current['avg_composite']:.1f}"})
+
+    # Top 1%
+    if total > 0 and rank <= max(1, total // 100):
+        achievements.append({"icon": "💎", "label": "Top 1%", "desc": f"Among the best out of {total} builders"})
+
+    return achievements
+
+
+def _render_evolution_section(username: str, week: str, rank: int, total: int, prev_ranks: dict) -> str:
+    """Render the gamification section: achievements + week-over-week narrative."""
+    evo = get_builder_evolution(username, week)
+    if not evo.get("current"):
+        return ""
+
+    achievements = _compute_achievements(evo, rank, total)
+    delta = evo.get("delta")
+
+    # --- Achievements badges ---
+    badges_html = ""
+    if achievements:
+        pills = []
+        for a in achievements:
+            pills.append(
+                f'<div class="achievement" title="{_esc(a["desc"])}">'
+                f'<span class="ach-icon">{a["icon"]}</span>'
+                f'<span class="ach-label">{_esc(a["label"])}</span>'
+                f'</div>'
+            )
+        badges_html = f'<div class="achievements">{"".join(pills)}</div>'
+
+    # --- Evolution narrative ---
+    narrative_html = ""
+    if delta:
+        cur = evo["current"]
+        prev = evo["previous"]
+        prev_rank = prev_ranks.get(username)
+
+        lines = []
+
+        # Rank movement
+        if prev_rank:
+            rank_diff = prev_rank - rank
+            if rank_diff > 0:
+                lines.append(f'<span class="evo-up">Climbed {rank_diff} spot{"s" if rank_diff > 1 else ""}</span> — from #{prev_rank} to #{rank}')
+            elif rank_diff < 0:
+                lines.append(f'<span class="evo-down">Dropped {-rank_diff} spot{"s" if -rank_diff > 1 else ""}</span> — from #{prev_rank} to #{rank}')
+            else:
+                lines.append(f'<span class="evo-same">Held steady</span> at #{rank}')
+
+        # Score change
+        if abs(delta["score"]) > 0.1:
+            direction = "up" if delta["score"] > 0 else "down"
+            lines.append(f'Score: {prev["avg_composite"]:.1f} → {cur["avg_composite"]:.1f} (<span class="evo-{direction}">{delta["score"]:+.1f}</span>)')
+
+        # Activity change
+        activity_parts = []
+        if delta["commits"] != 0:
+            activity_parts.append(f'{delta["commits"]:+d} commits')
+        if delta["prs"] != 0:
+            activity_parts.append(f'{delta["prs"]:+d} PRs')
+        if delta["repos"] != 0:
+            activity_parts.append(f'{delta["repos"]:+d} repo{"s" if abs(delta["repos"]) > 1 else ""}')
+        if activity_parts:
+            lines.append("Activity: " + ", ".join(activity_parts))
+
+        # New repos detail
+        new_repos = evo.get("new_repos", set())
+        if new_repos:
+            names = ", ".join(r.split("/")[-1] for r in list(new_repos)[:5])
+            lines.append(f'Started contributing to: <strong>{_esc(names)}</strong>')
+
+        lost_repos = evo.get("lost_repos", set())
+        if lost_repos:
+            names = ", ".join(r.split("/")[-1] for r in list(lost_repos)[:5])
+            lines.append(f'No longer active in: {_esc(names)}')
+
+        if lines:
+            items = "".join(f"<li>{l}</li>" for l in lines)
+            narrative_html = f'<ul class="evo-list">{items}</ul>'
+    elif evo["weeks_present"] == 1:
+        narrative_html = '<p class="evo-first">First appearance on the leaderboard — welcome! 🎉</p>'
+
+    if not badges_html and not narrative_html:
+        return ""
+
+    return f"""<div class="evolution-section">
+    <h2 class="section-title">This week's story</h2>
+    {badges_html}
+    {narrative_html}
   </div>"""
 
 
@@ -494,7 +633,7 @@ def _render_index(week: str, builders: list[dict], prev_ranks: dict = None, tren
 
 # ─── Profile page ─────────────────────────────────────────
 
-def _render_profile(username: str, detail: dict, week: str, rank: int, total: int) -> str:
+def _render_profile(username: str, detail: dict, week: str, rank: int, total: int, prev_ranks: dict = None) -> str:
     scores = detail["scores"]
     if not scores:
         return ""
@@ -677,6 +816,47 @@ def _render_profile(username: str, detail: dict, week: str, rank: int, total: in
   font-family: monospace;
   word-break: break-all;
 }}
+.evolution-section {{
+  margin-bottom: 32px;
+}}
+.achievements {{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}}
+.achievement {{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  transition: transform 0.15s;
+}}
+.achievement:hover {{ transform: scale(1.05); }}
+.ach-icon {{ font-size: 16px; }}
+.ach-label {{ font-weight: 500; }}
+.evo-list {{
+  list-style: none;
+  padding: 0;
+}}
+.evo-list li {{
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}}
+.evo-list li:last-child {{ border-bottom: none; }}
+.evo-up {{ color: #00b894; font-weight: 600; }}
+.evo-down {{ color: #d63031; font-weight: 600; }}
+.evo-same {{ color: var(--text2); font-weight: 600; }}
+.evo-first {{
+  color: var(--accent2);
+  font-size: 15px;
+  padding: 8px 0;
+}}
 .history-section {{
   margin-bottom: 32px;
 }}
@@ -747,6 +927,8 @@ def _render_profile(username: str, detail: dict, week: str, rank: int, total: in
       <div class="value">{len(latest_week_scores)}</div>
     </div>
   </div>
+
+  {_render_evolution_section(username, week, rank, total, prev_ranks or {})}
 
   {_render_history_section(username)}
 
@@ -850,7 +1032,7 @@ def generate_site():
         detail = _get_contributor_detail(username)
         user_dir = profiles_dir / username
         user_dir.mkdir(parents=True, exist_ok=True)
-        profile_html = _render_profile(username, detail, week, rank=i + 1, total=len(builders))
+        profile_html = _render_profile(username, detail, week, rank=i + 1, total=len(builders), prev_ranks=prev_ranks)
         if profile_html:
             (user_dir / "index.html").write_text(profile_html)
     logger.info("  %d profile pages", len(builders))

@@ -224,3 +224,119 @@ def get_total_contributors() -> int:
     with get_conn() as conn:
         row = conn.execute("SELECT COUNT(*) AS cnt FROM contributors").fetchone()
     return row["cnt"] if row else 0
+
+
+def get_builder_evolution(username: str, week_start: str) -> dict:
+    """
+    Get week-over-week evolution for a builder.
+    Returns dict with current/previous week stats and deltas.
+    """
+    with get_conn() as conn:
+        # Current week stats
+        cur = conn.execute("""
+            SELECT
+                AVG(composite) AS avg_composite,
+                SUM(commits) AS total_commits,
+                SUM(prs_merged) AS total_prs,
+                SUM(review_comments) AS total_reviews,
+                COUNT(DISTINCT repo) AS repo_count,
+                GROUP_CONCAT(DISTINCT repo) AS repos
+            FROM weekly_scores WHERE username = ? AND week_start = ?
+        """, (username, week_start)).fetchone()
+
+        # Previous week
+        prev_week_row = conn.execute("""
+            SELECT week_start FROM weekly_scores
+            WHERE week_start < ? GROUP BY week_start
+            ORDER BY week_start DESC LIMIT 1
+        """, (week_start,)).fetchone()
+
+        prev = None
+        if prev_week_row:
+            prev = conn.execute("""
+                SELECT
+                    AVG(composite) AS avg_composite,
+                    SUM(commits) AS total_commits,
+                    SUM(prs_merged) AS total_prs,
+                    SUM(review_comments) AS total_reviews,
+                    COUNT(DISTINCT repo) AS repo_count,
+                    GROUP_CONCAT(DISTINCT repo) AS repos
+                FROM weekly_scores WHERE username = ? AND week_start = ?
+            """, (username, prev_week_row["week_start"])).fetchone()
+
+        # Count total weeks present
+        weeks_present = conn.execute("""
+            SELECT COUNT(DISTINCT week_start) AS cnt
+            FROM weekly_scores WHERE username = ?
+        """, (username,)).fetchone()
+
+        # Best ever score
+        best = conn.execute("""
+            SELECT week_start, AVG(composite) AS avg_composite
+            FROM weekly_scores WHERE username = ?
+            GROUP BY week_start ORDER BY avg_composite DESC LIMIT 1
+        """, (username,)).fetchone()
+
+        # Streak: consecutive weeks present (from current week backwards)
+        all_weeks = conn.execute("""
+            SELECT DISTINCT week_start FROM weekly_scores
+            ORDER BY week_start DESC
+        """).fetchall()
+        user_weeks = set(
+            r["week_start"] for r in conn.execute(
+                "SELECT DISTINCT week_start FROM weekly_scores WHERE username = ?",
+                (username,)
+            ).fetchall()
+        )
+
+    all_week_list = [r["week_start"] for r in all_weeks]
+    streak = 0
+    for w in all_week_list:
+        if w in user_weeks:
+            streak += 1
+        else:
+            break
+
+    result = {
+        "current": dict(cur) if cur and cur["avg_composite"] else None,
+        "previous": dict(prev) if prev and prev["avg_composite"] else None,
+        "weeks_present": weeks_present["cnt"] if weeks_present else 0,
+        "streak": streak,
+        "best_week": dict(best) if best else None,
+    }
+
+    # Compute deltas
+    if result["current"] and result["previous"]:
+        c, p = result["current"], result["previous"]
+        result["delta"] = {
+            "score": c["avg_composite"] - p["avg_composite"],
+            "commits": c["total_commits"] - p["total_commits"],
+            "prs": c["total_prs"] - p["total_prs"],
+            "repos": c["repo_count"] - p["repo_count"],
+        }
+        # New repos this week
+        cur_repos = set(c["repos"].split(",")) if c["repos"] else set()
+        prev_repos = set(p["repos"].split(",")) if p["repos"] else set()
+        result["new_repos"] = cur_repos - prev_repos
+        result["lost_repos"] = prev_repos - cur_repos
+    else:
+        result["delta"] = None
+        result["new_repos"] = set()
+        result["lost_repos"] = set()
+
+    return result
+
+
+def get_builder_rank_in_week(username: str, week_start: str) -> int | None:
+    """Get a builder's rank for a specific week."""
+    with get_conn() as conn:
+        rows = conn.execute("""
+            SELECT username FROM weekly_scores
+            WHERE week_start = ?
+            GROUP BY username
+            ORDER BY AVG(composite) DESC
+        """, (week_start,)).fetchall()
+    for i, r in enumerate(rows):
+        if r["username"] == username:
+            return i + 1
+    return None
