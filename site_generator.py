@@ -22,7 +22,8 @@ logger = logging.getLogger(__name__)
 
 SITE_DIR = Path(__file__).parent / "_site"
 SITE_NAME = "ASI Builders"
-SITE_URL = "https://asi-builders.github.io"
+BASE_PATH = "/asi-builders"  # GitHub Pages subpath (empty string for custom domain)
+SITE_URL = f"https://domnumb.github.io{BASE_PATH}"
 
 
 # ─── Helpers ───────────────────────────────────────────────
@@ -168,7 +169,7 @@ def _render_index(week: str, builders: list[dict]) -> str:
         rank_class = "top3" if rank <= 3 else ""
 
         rows_html.append(f"""
-        <a href="/u/{username}/" class="row {rank_class}">
+        <a href="{BASE_PATH}/u/{username}/" class="row {rank_class}">
           <div class="rank">{'🥇🥈🥉'[rank-1] if rank <= 3 else f'#{rank}'}</div>
           <img class="avatar" src="https://github.com/{username}.png?size=64"
                alt="{username}" loading="lazy" onerror="this.style.display='none'" />
@@ -372,7 +373,7 @@ def _render_index(week: str, builders: list[dict]) -> str:
 <footer>
   <div class="container">
     Built by <a href="https://github.com/domnumb">@domnumb</a> &middot;
-    <a href="/api/leaderboard.json">Open data</a> &middot;
+    <a href="{BASE_PATH}/api/leaderboard.json">Open data</a> &middot;
     <a href="https://github.com/domnumb/asi-builders">Source</a>
   </div>
 </footer>
@@ -574,7 +575,7 @@ def _render_profile(username: str, detail: dict, week: str, rank: int, total: in
 <body>
 <header>
   <div class="container">
-    <a href="/" class="logo"><span>ASI</span> Builders</a>
+    <a href="{BASE_PATH}/" class="logo"><span>ASI</span> Builders</a>
     <div class="subtitle">Week of {week}</div>
   </div>
 </header>
@@ -625,9 +626,9 @@ def _render_profile(username: str, detail: dict, week: str, rank: int, total: in
 </main>
 <footer>
   <div class="container">
-    <a href="/">&larr; Full leaderboard</a> &middot;
+    <a href="{BASE_PATH}/">&larr; Full leaderboard</a> &middot;
     Built by <a href="https://github.com/domnumb">@domnumb</a> &middot;
-    <a href="/api/leaderboard.json">Open data</a> &middot;
+    <a href="{BASE_PATH}/api/leaderboard.json">Open data</a> &middot;
     <a href="https://github.com/domnumb/asi-builders">Source</a>
   </div>
 </footer>
