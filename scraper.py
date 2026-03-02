@@ -103,7 +103,7 @@ def scrape_repo(repo: str, since: datetime) -> dict[str, dict]:
         if not merged_at:
             continue
         merged_dt = datetime.fromisoformat(merged_at.replace("Z", "+00:00"))
-        if merged_dt < since.replace(tzinfo=timezone.utc):
+        if merged_dt < since:
             continue
         author = (pr.get("user") or {}).get("login", "unknown")
         if author in ("unknown", "", None):
@@ -142,7 +142,7 @@ def scrape_all(window_days: int = SCRAPE_WINDOW_DAYS) -> dict[str, dict[str, dic
     Scrape all tracked repos.
     Returns {repo: {username: stats}}.
     """
-    since = datetime.utcnow() - timedelta(days=window_days)
+    since = datetime.now(timezone.utc) - timedelta(days=window_days)
     results = {}
     for repo in TRACKED_REPOS:
         logger.info("Scraping %s ...", repo)

@@ -52,6 +52,8 @@ def init_db():
             );
             CREATE UNIQUE INDEX IF NOT EXISTS idx_weekly_scores_unique
                 ON weekly_scores(username, week_start, repo);
+            CREATE INDEX IF NOT EXISTS idx_weekly_scores_week_start
+                ON weekly_scores(week_start);
 
             CREATE TABLE IF NOT EXISTS publications (
                 id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -158,3 +160,67 @@ def mark_published(week_start: str, platform: str):
             UPDATE publications SET status = 'published', published_at = ?
             WHERE week_start = ? AND platform = ?
         """, (now, week_start, platform))
+
+
+def get_builder_history(username: str, limit: int = 12) -> list[dict]:
+    """Get a builder's composite score per week (most recent first)."""
+    with get_conn() as conn:
+        rows = conn.execute("""
+            SELECT week_start, AVG(composite) AS avg_composite
+            FROM weekly_scores
+            WHERE username = ?
+            GROUP BY week_start
+            ORDER BY week_start DESC
+            LIMIT ?
+        """, (username, limit)).fetchall()
+    return [dict(r) for r in rows]
+
+
+def get_previous_week_ranks(week_start: str) -> dict[str, int]:
+    """Get {username: rank} for the week before the given week_start."""
+    with get_conn() as conn:
+        rows = conn.execute("""
+            SELECT week_start FROM weekly_scores
+            WHERE week_start < ?
+            GROUP BY week_start
+            ORDER BY week_start DESC
+            LIMIT 1
+        """, (week_start,)).fetchone()
+    if not rows:
+        return {}
+    prev_week = rows["week_start"]
+    with get_conn() as conn:
+        ranked = conn.execute("""
+            SELECT username, AVG(composite) AS avg_composite
+            FROM weekly_scores
+            WHERE week_start = ?
+            GROUP BY username
+            ORDER BY avg_composite DESC
+        """, (prev_week,)).fetchall()
+    return {r["username"]: i + 1 for i, r in enumerate(ranked)}
+
+
+def get_trending_repos(week_start: str, limit: int = 5) -> list[dict]:
+    """Get repos with most activity this week."""
+    with get_conn() as conn:
+        rows = conn.execute("""
+            SELECT
+                repo,
+                COUNT(DISTINCT username) AS contributor_count,
+                SUM(commits) AS total_commits,
+                SUM(prs_merged) AS total_prs,
+                AVG(composite) AS avg_score
+            FROM weekly_scores
+            WHERE week_start = ?
+            GROUP BY repo
+            ORDER BY contributor_count DESC, total_commits DESC
+            LIMIT ?
+        """, (week_start, limit)).fetchall()
+    return [dict(r) for r in rows]
+
+
+def get_total_contributors() -> int:
+    """Get total unique contributors tracked historically."""
+    with get_conn() as conn:
+        row = conn.execute("SELECT COUNT(*) AS cnt FROM contributors").fetchone()
+    return row["cnt"] if row else 0

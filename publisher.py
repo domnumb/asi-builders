@@ -13,7 +13,7 @@ from config import (
     TOP_N,
     TRACKED_REPOS,
 )
-from db import get_top_builders, get_badge, save_publication, mark_published
+from db import get_top_builders, get_badge, save_publication
 
 logger = logging.getLogger(__name__)
 

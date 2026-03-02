@@ -15,7 +15,7 @@ import shutil
 from pathlib import Path
 from datetime import datetime, timedelta
 
-from db import get_conn, get_badge
+from db import get_conn, get_badge, get_previous_week_ranks, get_builder_history, get_trending_repos, get_total_contributors
 from config import TRACKED_REPOS, SCORE_WEIGHTS, BADGES
 
 logger = logging.getLogger(__name__)
@@ -86,6 +86,55 @@ def _esc(s: str) -> str:
     return html.escape(str(s))
 
 
+def _trend_indicator(username: str, current_rank: int, prev_ranks: dict) -> str:
+    """Return an HTML span with a trend arrow."""
+    if username not in prev_ranks:
+        return '<span class="trend new" title="New this week">NEW</span>'
+    prev = prev_ranks[username]
+    diff = prev - current_rank
+    if diff > 0:
+        return f'<span class="trend up" title="Up {diff} from #{prev}">+{diff}</span>'
+    elif diff < 0:
+        return f'<span class="trend down" title="Down {-diff} from #{prev}">{diff}</span>'
+    return '<span class="trend same" title="Same rank">=</span>'
+
+
+def _render_sparkline_css(history: list[dict]) -> str:
+    """Render a pure-CSS sparkline from weekly score history."""
+    if len(history) < 2:
+        return ""
+    # history is most-recent-first, reverse for chronological display
+    points = list(reversed(history))
+    scores = [p["avg_composite"] for p in points]
+    lo, hi = min(scores), max(scores)
+    span = hi - lo if hi > lo else 1
+
+    bars = []
+    for i, p in enumerate(points):
+        pct = (p["avg_composite"] - lo) / span * 100
+        height = max(pct, 8)  # minimum visible height
+        bars.append(
+            f'<div class="spark-bar" title="{p["week_start"]}: {p["avg_composite"]:.1f}" '
+            f'style="height:{height:.0f}%"></div>'
+        )
+    return f'<div class="sparkline">{"".join(bars)}</div>'
+
+
+def _render_history_section(username: str) -> str:
+    """Render the weekly score history section with sparkline."""
+    history = get_builder_history(username)
+    if len(history) < 2:
+        return ""
+    sparkline = _render_sparkline_css(history)
+    oldest = history[-1]["week_start"]
+    newest = history[0]["week_start"]
+    return f"""<div class="history-section">
+    <h2 class="section-title">Score history ({len(history)} weeks)</h2>
+    {sparkline}
+    <div class="spark-labels"><span>{oldest}</span><span>{newest}</span></div>
+  </div>"""
+
+
 # ─── CSS ───────────────────────────────────────────────────
 
 COMMON_CSS = """
@@ -153,9 +202,33 @@ footer {
 }
 """
 
+# ─── Trending repos section ────────────────────────────────
+
+def _render_trending_section(trending: list[dict]) -> str:
+    if not trending:
+        return ""
+    rows = []
+    for t in trending:
+        repo_short = t["repo"].split("/")[-1]
+        rows.append(f"""
+        <div class="trending-repo">
+          <div class="repo-name"><a href="https://github.com/{_esc(t['repo'])}">{_esc(repo_short)}</a></div>
+          <div class="repo-stats">
+            <span>{t['contributor_count']} contributors</span>
+            <span>{t['total_commits']} commits</span>
+            <span>{t['total_prs']} PRs</span>
+          </div>
+        </div>""")
+    return f"""<div class="trending-section">
+    <h3>Trending repos this week</h3>
+    {''.join(rows)}
+  </div>"""
+
+
 # ─── Index page ────────────────────────────────────────────
 
-def _render_index(week: str, builders: list[dict]) -> str:
+def _render_index(week: str, builders: list[dict], prev_ranks: dict = None, trending: list[dict] = None, total_contributors: int = 0) -> str:
+    prev_ranks = prev_ranks or {}
     rows_html = []
     for i, b in enumerate(builders):
         rank = i + 1
@@ -164,6 +237,7 @@ def _render_index(week: str, builders: list[dict]) -> str:
         repos = b.get("repos", "")
         repo_names = ", ".join(r.split("/")[-1] for r in repos.split(",")[:3]) if repos else ""
         score = b["avg_composite"]
+        trend = _trend_indicator(b["username"], rank, prev_ranks)
 
         bar_width = min(score / 10 * 100, 100)
         rank_class = "top3" if rank <= 3 else ""
@@ -174,7 +248,7 @@ def _render_index(week: str, builders: list[dict]) -> str:
           <img class="avatar" src="https://github.com/{username}.png?size=64"
                alt="{username}" loading="lazy" onerror="this.style.display='none'" />
           <div class="info">
-            <div class="name">{username} <span class="badge-label">{badge}</span></div>
+            <div class="name">{username} <span class="badge-label">{badge}</span>{trend}</div>
             <div class="repos">{_esc(repo_names)}</div>
           </div>
           <div class="stats">
@@ -337,6 +411,41 @@ def _render_index(week: str, builders: list[dict]) -> str:
   color: var(--accent2);
   word-break: break-all;
 }}
+.trend {{
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+}}
+.trend.up {{ color: #00b894; background: rgba(0,184,148,0.12); }}
+.trend.down {{ color: #d63031; background: rgba(214,48,49,0.12); }}
+.trend.new {{ color: var(--gold); background: rgba(249,202,36,0.12); }}
+.trend.same {{ color: var(--text2); }}
+.trending-section {{
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  margin-top: 32px;
+}}
+.trending-section h3 {{
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}}
+.trending-repo {{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}}
+.trending-repo:last-child {{ border-bottom: none; }}
+.trending-repo .repo-name {{ flex: 1; font-weight: 500; }}
+.trending-repo .repo-stats {{ color: var(--text2); font-size: 13px; display: flex; gap: 12px; }}
 @media (max-width: 640px) {{
   .stats {{ display: none; }}
   .score-col {{ width: 80px; }}
@@ -358,16 +467,18 @@ def _render_index(week: str, builders: list[dict]) -> str:
   </div>
   <div class="week-label">Week of {week}</div>
   <div class="meta">
-    <span><strong>{len(builders)}</strong> ranked contributors</span>
-    <span><strong>{len(TRACKED_REPOS)}</strong> tracked repos</span>
+    <span><strong>{len(builders)}</strong> ranked this week</span>
+    <span><strong>{total_contributors or len(builders)}</strong> tracked all-time</span>
+    <span><strong>{len(TRACKED_REPOS)}</strong> repos</span>
     <span>Scored on <strong>Impact &times; Complexity &times; Leverage</strong></span>
   </div>
   <div class="leaderboard">
     {''.join(rows_html)}
   </div>
+  {_render_trending_section(trending or [])}
   <div class="embed-section">
     <h3>Embed your badge</h3>
-    <code>![ASI Builder](https://asi-builders.github.io/badge/YOUR_USERNAME.svg)</code>
+    <code>![ASI Builder]({SITE_URL}/badge/YOUR_USERNAME.svg)</code>
   </div>
 </main>
 <footer>
@@ -566,6 +677,32 @@ def _render_profile(username: str, detail: dict, week: str, rank: int, total: in
   font-family: monospace;
   word-break: break-all;
 }}
+.history-section {{
+  margin-bottom: 32px;
+}}
+.sparkline {{
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 60px;
+  padding: 8px 0;
+}}
+.spark-bar {{
+  flex: 1;
+  background: linear-gradient(180deg, var(--accent2), var(--accent));
+  border-radius: 2px 2px 0 0;
+  min-width: 8px;
+  transition: opacity 0.15s;
+}}
+.spark-bar:hover {{
+  opacity: 0.7;
+}}
+.spark-labels {{
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text2);
+}}
 @media (max-width: 640px) {{
   .profile-header {{ flex-direction: column; text-align: center; }}
   .score-card {{ grid-template-columns: repeat(2, 1fr); }}
@@ -611,6 +748,8 @@ def _render_profile(username: str, detail: dict, week: str, rank: int, total: in
     </div>
   </div>
 
+  {_render_history_section(username)}
+
   <h2 class="section-title">Repo breakdown</h2>
   {''.join(repo_rows)}
 
@@ -621,7 +760,7 @@ def _render_profile(username: str, detail: dict, week: str, rank: int, total: in
       <a class="share-btn" href="https://www.linkedin.com/sharing/share-offsite/?url={profile_url}" target="_blank" rel="noopener">Share on LinkedIn</a>
     </div>
     <h3>Embed badge in your README</h3>
-    <div class="badge-code">[![ASI Builder](https://asi-builders.github.io/badge/{_esc(username)}.svg)](https://asi-builders.github.io/u/{_esc(username)}/)</div>
+    <div class="badge-code">[![ASI Builder]({SITE_URL}/badge/{_esc(username)}.svg)]({SITE_URL}/u/{_esc(username)}/)</div>
   </div>
 </main>
 <footer>
@@ -689,13 +828,18 @@ def generate_site():
 
     logger.info("Generating site for week %s — %d builders", week, len(builders))
 
+    # Fetch trends data
+    prev_ranks = get_previous_week_ranks(week)
+    trending = get_trending_repos(week)
+    total_contribs = get_total_contributors()
+
     # Clean & create output dir
     if SITE_DIR.exists():
         shutil.rmtree(SITE_DIR)
     SITE_DIR.mkdir(parents=True)
 
     # Index
-    index_html = _render_index(week, builders)
+    index_html = _render_index(week, builders, prev_ranks=prev_ranks, trending=trending, total_contributors=total_contribs)
     (SITE_DIR / "index.html").write_text(index_html)
     logger.info("  index.html")
 
