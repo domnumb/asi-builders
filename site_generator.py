@@ -371,8 +371,8 @@ def _render_index(week: str, builders: list[dict]) -> str:
 </main>
 <footer>
   <div class="container">
-    {SITE_NAME} &middot; Open data &middot;
-    <a href="/api/leaderboard.json">JSON API</a> &middot;
+    Built by <a href="https://github.com/domnumb">@domnumb</a> &middot;
+    <a href="/api/leaderboard.json">Open data</a> &middot;
     <a href="https://github.com/domnumb/asi-builders">Source</a>
   </div>
 </footer>
@@ -626,7 +626,8 @@ def _render_profile(username: str, detail: dict, week: str, rank: int, total: in
 <footer>
   <div class="container">
     <a href="/">&larr; Full leaderboard</a> &middot;
-    <a href="/api/leaderboard.json">JSON API</a> &middot;
+    Built by <a href="https://github.com/domnumb">@domnumb</a> &middot;
+    <a href="/api/leaderboard.json">Open data</a> &middot;
     <a href="https://github.com/domnumb/asi-builders">Source</a>
   </div>
 </footer>
