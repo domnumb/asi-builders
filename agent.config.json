@@ -1,0 +1,38 @@
+{
+  "version": "1.0",
+  "agent_entry": "AGENT.md",
+  "constitution": "/Users/mael/projects/AGENTS-CONSTITUTION.md",
+  "components": "state/components.json",
+  "ledger": "state/events.jsonl",
+  "spawn_scope": {
+    "include": [
+      "docs/",
+      "tests/"
+    ],
+    "output": [
+      "drafts/"
+    ],
+    "protected": [
+      "AGENT.md",
+      ".env"
+    ]
+  },
+  "autonomy": {
+    "can": [
+      "read",
+      "analyze",
+      "draft"
+    ],
+    "cannot": [
+      "publish",
+      "spend",
+      "modify_infra"
+    ],
+    "escalate_to": "pax"
+  },
+  "detect": {
+    "build": null,
+    "test": "pytest",
+    "lint": null
+  }
+}
