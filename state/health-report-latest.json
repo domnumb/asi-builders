@@ -3,17 +3,17 @@
   "data": {
     "project": "asi-builders",
     "components_total": 5,
-    "components_ok": 0,
-    "components_fail": 0,
-    "components_unknown": 5,
-    "uncommitted_files": 3,
-    "last_activity": "il y a 12 minutes",
+    "components_ok": 4,
+    "components_fail": 1,
+    "components_unknown": 0,
+    "uncommitted_files": 1,
+    "last_activity": "5 hours ago",
     "branch": "main",
     "drafts_pending": 4,
     "tests_pass": false,
     "has_site_builder": true,
     "content_stale": false,
-    "issues": [{"severity": "high", "component": "Tests", "status": "FAIL", "action": "Run tests and fix failures"}]
+    "issues": [{"severity": "high", "component": "Tests (pytest)", "status": "FAIL: exit 1", "action": "Investigate and fix"}, {"severity": "high", "component": "Tests", "status": "FAIL", "action": "Run tests and fix failures"}]
   },
-  "metric_value": 0
+  "metric_value": 4
 }
