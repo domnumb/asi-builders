@@ -1,17 +1,17 @@
 {
   "project": "asi-builders",
-  "domain": "AI open source contributions and emerging AI companies",
+  "domain": "AI open source contributions and emerging AI developer tools",
   "queries": [
-    "AI open source contributions GitHub 2026",
+    "AI open source contributions GitHub March 2026",
     "Anthropic open source releases 2026",
-    "OpenAI open source projects",
-    "DeepSeek open source",
-    "emerging AI startups India 2026",
-    "AI developer tools funding 2026"
+    "OpenAI open source projects 2026",
+    "DeepSeek open source model releases",
+    "emerging AI startups developer tools 2026",
+    "AI leaderboard GitHub contributors weekly"
   ],
   "format": "analysis",
-  "audience": "developers and AI enthusiasts",
-  "tone": "technical but accessible",
+  "audience": "developers and AI open source enthusiasts",
+  "tone": "technical but accessible, data-driven",
   "max_words": 800,
   "output_path": "drafts/weekly-ai-open-source-2026-03-18.md"
 }
