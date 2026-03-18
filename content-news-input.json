@@ -1,0 +1,17 @@
+{
+  "project": "asi-builders",
+  "domain": "AI open source contributions and emerging AI companies",
+  "queries": [
+    "AI open source contributions GitHub 2026",
+    "Anthropic open source releases 2026",
+    "OpenAI open source projects",
+    "DeepSeek open source",
+    "emerging AI startups India 2026",
+    "AI developer tools funding 2026"
+  ],
+  "format": "analysis",
+  "audience": "developers and AI enthusiasts",
+  "tone": "technical but accessible",
+  "max_words": 800,
+  "output_path": "drafts/weekly-ai-open-source-2026-03-18.md"
+}

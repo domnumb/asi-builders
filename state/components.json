@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Git repo",
+    "check": "cd /Users/mael/projects/asi-builders && git status --porcelain 2>/dev/null | wc -l | tr -d ' '",
+    "level": "EXISTS",
+    "expect": "exit 0",
+    "category": "infra"
+  },
+  {
+    "name": "Tests (pytest)",
+    "check": "cd /Users/mael/projects/asi-builders && python3 -m pytest --tb=no -q 2>/dev/null",
+    "level": "WORKS",
+    "expect": "exit 0",
+    "category": "quality",
+    "remediation": "pytest"
+  },
+  {
+    "name": "Generated site",
+    "check": "test -d /Users/mael/projects/asi-builders/_site",
+    "level": "EXISTS",
+    "expect": "exit 0",
+    "category": "web"
+  },
+  {
+    "name": "GitHub Actions",
+    "check": "test -d /Users/mael/projects/asi-builders/.github/workflows",
+    "level": "EXISTS",
+    "expect": "exit 0",
+    "category": "ci"
+  },
+  {
+    "name": "Web: domnumb.github.io",
+    "check": "curl -s -o /dev/null -w '%{http_code}' 'https://domnumb.github.io/asi-builders/' 2>/dev/null",
+    "level": "RESPONDS",
+    "expect": "200",
+    "category": "web"
+  }
+]
