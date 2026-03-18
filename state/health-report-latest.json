@@ -1,0 +1,19 @@
+{
+  "ok": true,
+  "data": {
+    "project": "asi-builders",
+    "components_total": 5,
+    "components_ok": 0,
+    "components_fail": 0,
+    "components_unknown": 5,
+    "uncommitted_files": 3,
+    "last_activity": "il y a 12 minutes",
+    "branch": "main",
+    "drafts_pending": 4,
+    "tests_pass": false,
+    "has_site_builder": true,
+    "content_stale": false,
+    "issues": [{"severity": "high", "component": "Tests", "status": "FAIL", "action": "Run tests and fix failures"}]
+  },
+  "metric_value": 0
+}

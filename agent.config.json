@@ -34,5 +34,11 @@
     "build": null,
     "test": "pytest",
     "lint": null
+  },
+  "site": {
+    "build_cmd": ".venv/bin/python3 main.py site",
+    "deploy_method": "git_push",
+    "live_url": "https://domnumb.github.io/asi-builders/insights/",
+    "content_dir": "_site/insights/"
   }
 }
