@@ -11,6 +11,7 @@ Generates:
 import json
 import html
 import logging
+import re
 import shutil
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -585,6 +586,12 @@ def _render_index(week: str, builders: list[dict], prev_ranks: dict = None, tren
 .trending-repo:last-child {{ border-bottom: none; }}
 .trending-repo .repo-name {{ flex: 1; font-weight: 500; }}
 .trending-repo .repo-stats {{ color: var(--text2); font-size: 13px; display: flex; gap: 12px; }}
+.nav-links {{
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 14px;
+}}
 @media (max-width: 640px) {{
   .stats {{ display: none; }}
   .score-col {{ width: 80px; }}
@@ -596,7 +603,10 @@ def _render_index(week: str, builders: list[dict], prev_ranks: dict = None, tren
 <header>
   <div class="container">
     <div class="logo"><span>ASI</span> Builders</div>
-    <div class="subtitle">Tracking {len(TRACKED_REPOS)} repos &middot; Scored by Claude</div>
+    <div class="nav-links">
+      <span class="subtitle">Tracking {len(TRACKED_REPOS)} repos</span>
+      <a href="{BASE_PATH}/insights/">Insights</a>
+    </div>
   </div>
 </header>
 <main class="container">
@@ -989,6 +999,450 @@ def _render_badge_svg(username: str, score: float, badge_text: str) -> str:
 </svg>"""
 
 
+# ─── Markdown → HTML (minimal, no external deps) ─────────
+
+def _md_to_html(text: str) -> str:
+    """Convert markdown to HTML using regex. Handles h1-h3, links, lists, blockquotes, code blocks, paragraphs."""
+    lines = text.split("\n")
+    out = []
+    in_code = False
+    in_list = False
+    in_blockquote = False
+    paragraph = []
+
+    def flush_paragraph():
+        if paragraph:
+            content = " ".join(paragraph)
+            content = _md_inline(content)
+            out.append(f"<p>{content}</p>")
+            paragraph.clear()
+
+    def _md_inline(s: str) -> str:
+        # Bold
+        s = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', s)
+        # Italic
+        s = re.sub(r'\*(.+?)\*', r'<em>\1</em>', s)
+        # Inline code
+        s = re.sub(r'`(.+?)`', r'<code>\1</code>', s)
+        # Links
+        s = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2" target="_blank" rel="noopener">\1</a>', s)
+        return s
+
+    for line in lines:
+        stripped = line.strip()
+
+        # Code blocks
+        if stripped.startswith("```"):
+            if in_code:
+                out.append("</code></pre>")
+                in_code = False
+            else:
+                flush_paragraph()
+                lang = stripped[3:].strip()
+                out.append(f'<pre><code class="lang-{lang}">' if lang else "<pre><code>")
+                in_code = True
+            continue
+        if in_code:
+            out.append(html.escape(line))
+            continue
+
+        # Empty line
+        if not stripped:
+            flush_paragraph()
+            if in_list:
+                out.append("</ul>")
+                in_list = False
+            if in_blockquote:
+                out.append("</blockquote>")
+                in_blockquote = False
+            continue
+
+        # Headers
+        m = re.match(r'^(#{1,3})\s+(.+)$', stripped)
+        if m:
+            flush_paragraph()
+            level = len(m.group(1))
+            out.append(f"<h{level}>{_md_inline(m.group(2))}</h{level}>")
+            continue
+
+        # Blockquote
+        if stripped.startswith("> "):
+            flush_paragraph()
+            if not in_blockquote:
+                out.append("<blockquote>")
+                in_blockquote = True
+            out.append(f"<p>{_md_inline(stripped[2:])}</p>")
+            continue
+
+        # Unordered list
+        if re.match(r'^[-*]\s+', stripped):
+            flush_paragraph()
+            if not in_list:
+                out.append("<ul>")
+                in_list = True
+            content = re.sub(r'^[-*]\s+', '', stripped)
+            out.append(f"<li>{_md_inline(content)}</li>")
+            continue
+
+        # Ordered list
+        if re.match(r'^\d+\.\s+', stripped):
+            flush_paragraph()
+            if not in_list:
+                out.append("<ul>")
+                in_list = True
+            content = re.sub(r'^\d+\.\s+', '', stripped)
+            out.append(f"<li>{_md_inline(content)}</li>")
+            continue
+
+        # Regular text → paragraph
+        paragraph.append(stripped)
+
+    flush_paragraph()
+    if in_list:
+        out.append("</ul>")
+    if in_blockquote:
+        out.append("</blockquote>")
+    if in_code:
+        out.append("</code></pre>")
+
+    return "\n".join(out)
+
+
+def _parse_draft(filepath: Path) -> dict | None:
+    """Parse a draft markdown file. Returns {title, date, slug, excerpt, html_content} or None."""
+    text = filepath.read_text(encoding="utf-8")
+    if not text.strip():
+        return None
+
+    # Extract title: first H1
+    title_match = re.search(r'^#\s+(.+)$', text, re.MULTILINE)
+    title = title_match.group(1).strip() if title_match else filepath.stem
+
+    # Extract date from filename pattern *-YYYY-MM-DD.md
+    date_match = re.search(r'(\d{4}-\d{2}-\d{2})', filepath.stem)
+    date_str = date_match.group(1) if date_match else datetime.utcnow().strftime("%Y-%m-%d")
+
+    # Slug from filename (without date)
+    slug = re.sub(r'-?\d{4}-\d{2}-\d{2}-?', '', filepath.stem).strip('-') or filepath.stem
+
+    # Excerpt: first non-header, non-empty, non-blockquote paragraph
+    excerpt = ""
+    for line in text.split("\n"):
+        line = line.strip()
+        if not line or line.startswith("#") or line.startswith(">") or line.startswith("```"):
+            continue
+        # Strip markdown formatting for excerpt
+        clean = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', line)
+        clean = re.sub(r'[*_`]', '', clean)
+        if len(clean) > 20:
+            excerpt = clean[:150] + ("..." if len(clean) > 150 else "")
+            break
+
+    html_content = _md_to_html(text)
+
+    return {
+        "title": title,
+        "date": date_str,
+        "slug": slug,
+        "excerpt": excerpt,
+        "html_content": html_content,
+        "filename": filepath.name,
+    }
+
+
+# ─── Insights section ─────────────────────────────────────
+
+INSIGHTS_CSS = """
+.insights-list { display: grid; gap: 20px; margin-top: 24px; }
+.insight-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  transition: border-color 0.2s, transform 0.15s;
+  color: var(--text);
+  text-decoration: none;
+  display: block;
+}
+.insight-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+.insight-card .card-date {
+  font-size: 12px;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+.insight-card h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--accent2);
+  line-height: 1.3;
+}
+.insight-card .card-excerpt {
+  font-size: 14px;
+  color: var(--text2);
+  line-height: 1.5;
+}
+"""
+
+ARTICLE_CSS = """
+.article-container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+.article-meta {
+  font-size: 13px;
+  color: var(--text2);
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.article-body {
+  font-size: 16px;
+  line-height: 1.7;
+}
+.article-body h1 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin: 32px 0 16px;
+  color: var(--accent2);
+}
+.article-body h2 {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 28px 0 12px;
+  color: var(--accent2);
+}
+.article-body h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 24px 0 10px;
+  color: var(--accent2);
+}
+.article-body p {
+  margin-bottom: 16px;
+}
+.article-body a {
+  color: var(--accent2);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.article-body ul, .article-body ol {
+  margin: 12px 0 16px 24px;
+}
+.article-body li {
+  margin-bottom: 6px;
+}
+.article-body blockquote {
+  border-left: 3px solid var(--accent);
+  padding: 8px 16px;
+  margin: 16px 0;
+  color: var(--text2);
+  background: var(--bg2);
+  border-radius: 0 8px 8px 0;
+}
+.article-body pre {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  overflow-x: auto;
+  margin: 16px 0;
+}
+.article-body code {
+  font-size: 14px;
+  color: var(--accent2);
+}
+.article-body p code {
+  background: var(--bg2);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.article-body strong {
+  color: var(--text);
+  font-weight: 600;
+}
+.back-link {
+  display: inline-block;
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+"""
+
+
+def _render_insights_index(articles: list[dict]) -> str:
+    cards = []
+    for a in articles:
+        cards.append(f"""
+        <a href="{BASE_PATH}/insights/{a['slug']}/" class="insight-card">
+          <div class="card-date">{a['date']}</div>
+          <h2>{_esc(a['title'])}</h2>
+          <div class="card-excerpt">{_esc(a['excerpt'])}</div>
+        </a>""")
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Insights — {SITE_NAME}</title>
+<meta name="description" content="Insights and analysis from the ASI Builders community.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+{COMMON_CSS}
+{INSIGHTS_CSS}
+.insights-hero {{
+  text-align: center;
+  padding: 40px 0 16px;
+}}
+.insights-hero h1 {{
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: 8px;
+}}
+.insights-hero h1 span {{ color: var(--accent2); }}
+.insights-hero p {{
+  color: var(--text2);
+  font-size: 15px;
+}}
+.nav-links {{
+  display: flex;
+  gap: 16px;
+  font-size: 14px;
+}}
+</style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <a href="{BASE_PATH}/" class="logo"><span>ASI</span> Builders</a>
+    <div class="nav-links">
+      <a href="{BASE_PATH}/">Leaderboard</a>
+      <a href="{BASE_PATH}/insights/" style="color:var(--text);">Insights</a>
+    </div>
+  </div>
+</header>
+<main class="container">
+  <div class="insights-hero">
+    <h1><span>Insights</span></h1>
+    <p>Analysis and trends from the ASI open source ecosystem.</p>
+  </div>
+  <div class="insights-list">
+    {''.join(cards)}
+  </div>
+</main>
+<footer>
+  <div class="container">
+    <a href="{BASE_PATH}/">&larr; Leaderboard</a> &middot;
+    Built by <a href="https://github.com/domnumb">@domnumb</a> &middot;
+    <a href="{BASE_PATH}/api/leaderboard.json">Open data</a>
+  </div>
+</footer>
+</body>
+</html>"""
+
+
+def _render_insights_article(article: dict) -> str:
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{_esc(article['title'])} — {SITE_NAME}</title>
+<meta name="description" content="{_esc(article['excerpt'])}">
+<meta property="og:title" content="{_esc(article['title'])}">
+<meta property="og:description" content="{_esc(article['excerpt'])}">
+<meta property="og:type" content="article">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+{COMMON_CSS}
+{ARTICLE_CSS}
+.nav-links {{
+  display: flex;
+  gap: 16px;
+  font-size: 14px;
+}}
+</style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <a href="{BASE_PATH}/" class="logo"><span>ASI</span> Builders</a>
+    <div class="nav-links">
+      <a href="{BASE_PATH}/">Leaderboard</a>
+      <a href="{BASE_PATH}/insights/">Insights</a>
+    </div>
+  </div>
+</header>
+<main class="article-container">
+  <a href="{BASE_PATH}/insights/" class="back-link">&larr; All insights</a>
+  <div class="article-meta">{article['date']}</div>
+  <article class="article-body">
+    {article['html_content']}
+  </article>
+</main>
+<footer>
+  <div class="container">
+    <a href="{BASE_PATH}/insights/">&larr; All insights</a> &middot;
+    Built by <a href="https://github.com/domnumb">@domnumb</a> &middot;
+    <a href="{BASE_PATH}/api/leaderboard.json">Open data</a>
+  </div>
+</footer>
+</body>
+</html>"""
+
+
+def _render_insights():
+    """Scan drafts/*.md, generate insights index + article pages."""
+    drafts_dir = Path(__file__).parent / "drafts"
+    if not drafts_dir.exists():
+        logger.info("  No drafts/ directory — skipping insights")
+        return 0
+
+    md_files = sorted(drafts_dir.glob("*.md"), reverse=True)
+    if not md_files:
+        logger.info("  No markdown files in drafts/ — skipping insights")
+        return 0
+
+    articles = []
+    for f in md_files:
+        parsed = _parse_draft(f)
+        if parsed:
+            articles.append(parsed)
+
+    # Sort by date descending
+    articles.sort(key=lambda a: a["date"], reverse=True)
+
+    if not articles:
+        return 0
+
+    # Create insights directory
+    insights_dir = SITE_DIR / "insights"
+    insights_dir.mkdir(parents=True, exist_ok=True)
+
+    # Index page
+    index_html = _render_insights_index(articles)
+    (insights_dir / "index.html").write_text(index_html)
+
+    # Individual articles
+    for article in articles:
+        article_dir = insights_dir / article["slug"]
+        article_dir.mkdir(parents=True, exist_ok=True)
+        article_html = _render_insights_article(article)
+        (article_dir / "index.html").write_text(article_html)
+
+    logger.info("  %d insight articles", len(articles))
+    return len(articles)
+
+
 # ─── Generator ─────────────────────────────────────────────
 
 def generate_site():
@@ -1046,6 +1500,9 @@ def generate_site():
         svg = _render_badge_svg(username, b["avg_composite"], badge_text)
         (badge_dir / f"{username}.svg").write_text(svg)
     logger.info("  %d badges", len(builders))
+
+    # Insights (blog articles from drafts/)
+    _render_insights()
 
     # JSON API
     api_dir = SITE_DIR / "api"
