@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>tangkenyi2001 — ASI Builders</title>
+<meta name="description" content="tangkenyi2001 is ranked #388 on ASI Builders. Score: 2.1/10. 👀 On the Radar">
+<meta property="og:title" content="tangkenyi2001 — #388 ASI Builder">
+<meta property="og:description" content="Score: 2.1/10 &middot; 0 commits &middot; 0 PRs merged &middot; 👀 On the Radar">
+<meta property="og:type" content="profile">
+<meta property="og:url" content="https://domnumb.github.io/asi-builders/u/tangkenyi2001/">
+<meta property="og:image" content="https://github.com/tangkenyi2001.png?size=256">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="tangkenyi2001 — #388 ASI Builder">
+<meta name="twitter:description" content="Score: 2.1/10 &middot; 👀 On the Radar">
+<meta name="twitter:image" content="https://github.com/tangkenyi2001.png?size=256">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --bg: #0a0a0f;
+  --bg2: #12121a;
+  --bg3: #1a1a25;
+  --border: #2a2a3a;
+  --text: #e0e0e8;
+  --text2: #8888a0;
+  --accent: #6c5ce7;
+  --accent2: #a29bfe;
+  --gold: #f9ca24;
+  --green: #00b894;
+  --blue: #0984e3;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+a { color: var(--accent2); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.container { max-width: 900px; margin: 0 auto; padding: 0 20px; }
+header {
+  border-bottom: 1px solid var(--border);
+  padding: 24px 0;
+  margin-bottom: 32px;
+}
+header .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.logo {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.5px;
+}
+.logo span { color: var(--accent2); }
+.subtitle {
+  font-size: 13px;
+  color: var(--text2);
+}
+.meta {
+  font-size: 13px;
+  color: var(--text2);
+  margin-bottom: 24px;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.meta strong { color: var(--text); }
+footer {
+  border-top: 1px solid var(--border);
+  padding: 24px 0;
+  margin-top: 48px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text2);
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 32px 0;
+}
+.profile-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+}
+.profile-info h1 {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.profile-info h1 .rank-tag {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--accent2);
+  background: var(--bg3);
+  padding: 2px 10px;
+  border-radius: 12px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.profile-badge {
+  font-size: 16px;
+  color: var(--text2);
+}
+.score-card {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 32px;
+}
+.score-card .card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+}
+.card .label {
+  font-size: 12px;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+.card .value {
+  font-size: 28px;
+  font-weight: 700;
+}
+.card .value.accent { color: var(--accent2); }
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.repo-row {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.repo-row:last-child { border-bottom: none; }
+.repo-name { font-weight: 600; margin-bottom: 4px; }
+.repo-scores {
+  font-size: 14px;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.repo-scores .dim { color: var(--text2); margin-right: 2px; }
+.repo-scores .composite {
+  color: var(--accent2);
+  font-weight: 600;
+  margin-left: auto;
+}
+.repo-stats {
+  font-size: 12px;
+  color: var(--text2);
+}
+.rationale {
+  font-size: 13px;
+  color: var(--text2);
+  font-style: italic;
+  margin-top: 4px;
+}
+.share-section {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  margin-top: 24px;
+}
+.share-section h3 { font-size: 14px; margin-bottom: 10px; }
+.share-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.share-btn:hover { background: var(--accent); color: white; text-decoration: none; }
+.badge-code {
+  background: var(--bg);
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--accent2);
+  font-family: monospace;
+  word-break: break-all;
+}
+.evolution-section {
+  margin-bottom: 32px;
+}
+.achievements {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.achievement {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  transition: transform 0.15s;
+}
+.achievement:hover { transform: scale(1.05); }
+.ach-icon { font-size: 16px; }
+.ach-label { font-weight: 500; }
+.evo-list {
+  list-style: none;
+  padding: 0;
+}
+.evo-list li {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.evo-list li:last-child { border-bottom: none; }
+.evo-up { color: #00b894; font-weight: 600; }
+.evo-down { color: #d63031; font-weight: 600; }
+.evo-same { color: var(--text2); font-weight: 600; }
+.evo-first {
+  color: var(--accent2);
+  font-size: 15px;
+  padding: 8px 0;
+}
+.history-section {
+  margin-bottom: 32px;
+}
+.sparkline {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 60px;
+  padding: 8px 0;
+}
+.spark-bar {
+  flex: 1;
+  background: linear-gradient(180deg, var(--accent2), var(--accent));
+  border-radius: 2px 2px 0 0;
+  min-width: 8px;
+  transition: opacity 0.15s;
+}
+.spark-bar:hover {
+  opacity: 0.7;
+}
+.spark-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text2);
+}
+@media (max-width: 640px) {
+  .profile-header { flex-direction: column; text-align: center; }
+  .score-card { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <a href="/asi-builders/" class="logo"><span>ASI</span> Builders</a>
+    <div class="subtitle">Week of 2026-03-02</div>
+  </div>
+</header>
+<main class="container">
+  <div class="profile-header">
+    <img class="profile-avatar" src="https://github.com/tangkenyi2001.png?size=160"
+         alt="tangkenyi2001" onerror="this.style.display='none'" />
+    <div class="profile-info">
+      <h1>
+        <a href="https://github.com/tangkenyi2001">tangkenyi2001</a>
+        <span class="rank-tag">#388 of 500</span>
+      </h1>
+      <div class="profile-badge">👀 On the Radar</div>
+    </div>
+  </div>
+
+  <div class="score-card">
+    <div class="card">
+      <div class="label">Composite</div>
+      <div class="value accent">2.1</div>
+    </div>
+    <div class="card">
+      <div class="label">Commits</div>
+      <div class="value">0</div>
+    </div>
+    <div class="card">
+      <div class="label">PRs Merged</div>
+      <div class="value">0</div>
+    </div>
+    <div class="card">
+      <div class="label">Repos</div>
+      <div class="value">1</div>
+    </div>
+  </div>
+
+  <div class="evolution-section">
+    <h2 class="section-title">This week's story</h2>
+    <div class="achievements"><div class="achievement" title="Active 2 weeks in a row"><span class="ach-icon">🔥</span><span class="ach-label">2-Week Streak</span></div><div class="achievement" title="+0.7 points vs last week"><span class="ach-icon">📈</span><span class="ach-label">Score Up</span></div><div class="achievement" title="Highest score ever: 2.1"><span class="ach-icon">👑</span><span class="ach-label">Personal Best</span></div></div>
+    <ul class="evo-list"><li><span class="evo-up">Climbed 174 spots</span> — from #562 to #388</li><li>Score: 1.4 → 2.1 (<span class="evo-up">+0.7</span>)</li></ul>
+  </div>
+
+  <div class="history-section">
+    <h2 class="section-title">Score history (2 weeks)</h2>
+    <div class="sparkline"><div class="spark-bar" title="2026-02-23: 1.4" style="height:8%"></div><div class="spark-bar" title="2026-03-02: 2.1" style="height:100%"></div></div>
+    <div class="spark-labels"><span>2026-02-23</span><span>2026-03-02</span></div>
+  </div>
+
+  <h2 class="section-title">Repo breakdown</h2>
+  
+        <div class="repo-row">
+          <div class="repo-name">
+            <a href="https://github.com/vllm-project/vllm">vllm</a>
+          </div>
+          <div class="repo-scores">
+            <span class="dim">I:</span>3
+            <span class="dim">C:</span>1
+            <span class="dim">L:</span>2
+            <span class="composite">2.1</span>
+          </div>
+          <div class="repo-stats">0c &middot; 0pr</div>
+          <div class="rationale">Contributor closed one issue in last 7 days with no commits or PRs merged, indicating minimal technical contribution or meaningful advancement to vLLM&#x27;s inference capabilities.</div>
+        </div>
+
+  <div class="share-section">
+    <h3>Share your ranking</h3>
+    <div class="share-row">
+      <a class="share-btn" href="https://twitter.com/intent/tweet?text=I&#x27;m ranked #388 on ASI Builders this week! https://domnumb.github.io/asi-builders/u/tangkenyi2001/" target="_blank" rel="noopener">Post on X</a>
+      <a class="share-btn" href="https://www.linkedin.com/sharing/share-offsite/?url=https://domnumb.github.io/asi-builders/u/tangkenyi2001/" target="_blank" rel="noopener">Share on LinkedIn</a>
+    </div>
+    <h3>Embed badge in your README</h3>
+    <div class="badge-code">[![ASI Builder](https://domnumb.github.io/asi-builders/badge/tangkenyi2001.svg)](https://domnumb.github.io/asi-builders/u/tangkenyi2001/)</div>
+  </div>
+</main>
+<footer>
+  <div class="container">
+    <a href="/asi-builders/">&larr; Full leaderboard</a> &middot;
+    Built by <a href="https://github.com/domnumb">@domnumb</a> &middot;
+    <a href="/asi-builders/api/leaderboard.json">Open data</a> &middot;
+    <a href="https://github.com/domnumb/asi-builders">Source</a>
+  </div>
+</footer>
+</body>
+</html>

@@ -605,7 +605,7 @@ def _render_index(week: str, builders: list[dict], prev_ranks: dict = None, tren
     <div class="logo"><span>ASI</span> Builders</div>
     <div class="nav-links">
       <span class="subtitle">Tracking {len(TRACKED_REPOS)} repos</span>
-      <a href="{BASE_PATH}/insights/">Insights</a>
+      <a href="{BASE_PATH}/insights/">Heartbeat</a>
     </div>
   </div>
 </header>
@@ -1153,40 +1153,84 @@ def _parse_draft(filepath: Path) -> dict | None:
 # ─── Insights section ─────────────────────────────────────
 
 INSIGHTS_CSS = """
-.insights-list { display: grid; gap: 20px; margin-top: 24px; }
-.insight-card {
+.heartbeat-list { display: grid; gap: 20px; margin-top: 24px; }
+.hb-card {
   background: var(--bg2);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 24px;
-  transition: border-color 0.2s, transform 0.15s;
+  padding: 24px 28px;
+  transition: border-color 0.3s, transform 0.15s, box-shadow 0.3s;
   color: var(--text);
   text-decoration: none;
   display: block;
+  position: relative;
+  overflow: hidden;
 }
-.insight-card:hover {
+.hb-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 3px; height: 100%;
+  background: var(--accent);
+  opacity: 0.6;
+  transition: opacity 0.3s;
+}
+.hb-card:hover {
   border-color: var(--accent);
   transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(108,92,231,0.12);
   text-decoration: none;
 }
-.insight-card .card-date {
-  font-size: 12px;
-  color: var(--text2);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 8px;
+.hb-card:hover::before { opacity: 1; }
+.hb-card .card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
 }
-.insight-card h2 {
+.hb-card .pulse {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: pulse-glow 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 4px var(--green); }
+  50% { box-shadow: 0 0 12px var(--green), 0 0 20px rgba(0,184,148,0.3); }
+}
+.hb-card .card-ago {
+  font-size: 12px;
+  color: var(--green);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+.hb-card h2 {
   font-size: 18px;
   font-weight: 600;
   margin-bottom: 8px;
-  color: var(--accent2);
+  color: var(--text);
   line-height: 1.3;
 }
-.insight-card .card-excerpt {
+.hb-card .card-excerpt {
   font-size: 14px;
   color: var(--text2);
-  line-height: 1.5;
+  line-height: 1.6;
+}
+.hb-card .card-footer {
+  display: flex;
+  gap: 16px;
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--text2);
+}
+.hb-card .card-footer .tag {
+  background: var(--bg3);
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  color: var(--accent2);
+  border: 1px solid var(--border);
 }
 """
 
@@ -1277,14 +1321,44 @@ ARTICLE_CSS = """
 """
 
 
+def _time_ago(date_str: str) -> str:
+    """Convert a date string to a relative time like '2h ago', '3 days ago'."""
+    try:
+        from datetime import datetime, timezone
+        d = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        now = datetime.now(timezone.utc)
+        delta = now - d
+        if delta.days == 0:
+            return "today"
+        elif delta.days == 1:
+            return "yesterday"
+        elif delta.days < 7:
+            return f"{delta.days}d ago"
+        elif delta.days < 30:
+            weeks = delta.days // 7
+            return f"{weeks}w ago"
+        else:
+            return date_str
+    except Exception:
+        return date_str
+
+
 def _render_insights_index(articles: list[dict]) -> str:
     cards = []
     for a in articles:
+        ago = _time_ago(a['date'])
         cards.append(f"""
-        <a href="{BASE_PATH}/insights/{a['slug']}/" class="insight-card">
-          <div class="card-date">{a['date']}</div>
+        <a href="{BASE_PATH}/insights/{a['slug']}/" class="hb-card">
+          <div class="card-top">
+            <span class="pulse"></span>
+            <span class="card-ago">{ago}</span>
+          </div>
           <h2>{_esc(a['title'])}</h2>
           <div class="card-excerpt">{_esc(a['excerpt'])}</div>
+          <div class="card-footer">
+            <span class="tag">AI Open Source</span>
+            <span>{a['date']}</span>
+          </div>
         </a>""")
 
     return f"""<!DOCTYPE html>
@@ -1292,8 +1366,8 @@ def _render_insights_index(articles: list[dict]) -> str:
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Insights — {SITE_NAME}</title>
-<meta name="description" content="Insights and analysis from the ASI Builders community.">
+<title>Heartbeat — {SITE_NAME}</title>
+<meta name="description" content="Pulse of the ASI open source ecosystem. Latest analysis and trends.">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 {COMMON_CSS}
@@ -1326,16 +1400,16 @@ def _render_insights_index(articles: list[dict]) -> str:
     <a href="{BASE_PATH}/" class="logo"><span>ASI</span> Builders</a>
     <div class="nav-links">
       <a href="{BASE_PATH}/">Leaderboard</a>
-      <a href="{BASE_PATH}/insights/" style="color:var(--text);">Insights</a>
+      <a href="{BASE_PATH}/insights/" style="color:var(--text);">Heartbeat</a>
     </div>
   </div>
 </header>
 <main class="container">
   <div class="insights-hero">
-    <h1><span>Insights</span></h1>
-    <p>Analysis and trends from the ASI open source ecosystem.</p>
+    <h1><span>Heartbeat</span></h1>
+    <p>Pulse of the ASI open source ecosystem.</p>
   </div>
-  <div class="insights-list">
+  <div class="heartbeat-list">
     {''.join(cards)}
   </div>
 </main>
@@ -1378,7 +1452,7 @@ def _render_insights_article(article: dict) -> str:
     <a href="{BASE_PATH}/" class="logo"><span>ASI</span> Builders</a>
     <div class="nav-links">
       <a href="{BASE_PATH}/">Leaderboard</a>
-      <a href="{BASE_PATH}/insights/">Insights</a>
+      <a href="{BASE_PATH}/insights/">Heartbeat</a>
     </div>
   </div>
 </header>
