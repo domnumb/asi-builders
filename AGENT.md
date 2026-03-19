@@ -84,3 +84,5 @@ Last 3 commits:
   3db78f6 feat: gamification — achievements + week-over-week evolution
   95c8bf6 feat: multi-week trends, fix bugs, cleanup repo
 Uncommitted changes: 3 files
+
+- [2026-03-19T02:35Z] Bernard: Published article "MCP + A2A: The Two Protocols Reshaping How AI Agents Work Together" (src/content/articles/mcp-a2a-ai-agent-interoperability-2026.md). 1050 words, 3 sources. Commit in asi-builders repo.
