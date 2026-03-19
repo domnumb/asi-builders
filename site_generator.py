@@ -1476,12 +1476,20 @@ def _render_insights_article(article: dict) -> str:
 
 def _render_insights():
     """Scan drafts/*.md, generate insights index + article pages."""
-    drafts_dir = Path(__file__).parent / "drafts"
+    # Scan all article locations: drafts/publish/, drafts/, content/articles/
+    root = Path(__file__).parent
+    drafts_dir = root / "drafts"  # will scan recursively
     if not drafts_dir.exists():
         logger.info("  No drafts/ directory — skipping insights")
         return 0
 
-    md_files = sorted(drafts_dir.glob("*.md"), reverse=True)
+    # Scan drafts/*.md + drafts/publish/*.md + content/articles/*.md
+    md_files = sorted(
+        list(drafts_dir.glob("*.md")) + 
+        list(drafts_dir.glob("publish/*.md")) + 
+        list((root / "content" / "articles").glob("*.md")) if (root / "content" / "articles").exists() else [],
+        reverse=True
+    )
     if not md_files:
         logger.info("  No markdown files in drafts/ — skipping insights")
         return 0
