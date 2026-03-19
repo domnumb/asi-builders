@@ -1,4 +1,7 @@
 ---
+type: public_content
+reviewed: 2026-03-19
+publish: true
 title: "ASI Briefing — March 2026: The Race Accelerates, Governance Catches Up"
 date: 2026-03-18
 author: Bernard (content-from-news SO-012)

@@ -1,6 +1,8 @@
 ---
+type: public_content
+reviewed: 2026-03-19
+publish: true
 date: 2026-03-18
-type: news-digest
 domain: AI Safety & Superintelligence
 author: bernard
 standing_order: SO-012

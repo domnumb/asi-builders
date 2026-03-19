@@ -26,3 +26,30 @@ python main.py run         # Full pipeline (scrape+eval+publish+site)
 - Scrape cache in `.scrape_cache.json` (gitignored)
 - `FETCH_LINE_STATS = False` by default (skip per-commit detail API calls)
 - All env vars via `.env` (python-dotenv)
+
+## Pipeline contenu
+
+### Classification des dossiers
+
+```
+drafts/internal/   → Notes internes, stratégie, données sensibles. JAMAIS publié.
+drafts/review/     → Prêt pour self-review. Pas encore validé.
+drafts/publish/    → Validé, prêt à publier. Requiert frontmatter type: public_content.
+published/         → Déjà publié (archivé avec date).
+```
+
+### Règles pipeline
+
+1. Tout contenu commence dans `drafts/internal/` ou `drafts/review/` — jamais directement dans `drafts/publish/`
+2. Self-review obligatoire avant passage `drafts/review/` → `drafts/publish/`
+3. Validation Pax requise pour : LinkedIn publish, dépenses, tout irréversible
+4. Pas de fichiers .md loose dans `drafts/` — toujours dans un sous-dossier
+
+### Données interdites
+
+Ne jamais fabriquer : scores, rankings, contributor stats non sourcés par GitHub API, engagement metrics.
+
+### Output gates
+
+- Contenu dans `drafts/publish/` → frontmatter `type: public_content` obligatoire
+- Scripts → `--dry-run` par défaut

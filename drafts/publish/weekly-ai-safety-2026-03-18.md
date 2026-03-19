@@ -1,4 +1,7 @@
 ---
+type: public_content
+reviewed: 2026-03-19
+publish: true
 title: "AI Safety & Governance Weekly — March 18, 2026"
 date: 2026-03-18
 format: briefing
