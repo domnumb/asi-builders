@@ -1114,8 +1114,15 @@ def _parse_draft(filepath: Path) -> dict | None:
     if not text.strip():
         return None
 
-    # Extract title: first H1
-    title_match = re.search(r'^#\s+(.+)$', text, re.MULTILINE)
+    # Strip YAML frontmatter if present
+    content = text
+    if text.startswith("---"):
+        end = text.find("---", 3)
+        if end > 0:
+            content = text[end + 3:].strip()
+
+    # Extract title: first H1 (from content without frontmatter)
+    title_match = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
     title = title_match.group(1).strip() if title_match else filepath.stem
 
     # Extract date from filename pattern *-YYYY-MM-DD.md
@@ -1125,9 +1132,9 @@ def _parse_draft(filepath: Path) -> dict | None:
     # Slug from filename (without date)
     slug = re.sub(r'-?\d{4}-\d{2}-\d{2}-?', '', filepath.stem).strip('-') or filepath.stem
 
-    # Excerpt: first non-header, non-empty, non-blockquote paragraph
+    # Excerpt: first non-header, non-empty, non-blockquote paragraph (from content without frontmatter)
     excerpt = ""
-    for line in text.split("\n"):
+    for line in content.split("\n"):
         line = line.strip()
         if not line or line.startswith("#") or line.startswith(">") or line.startswith("```"):
             continue
@@ -1138,7 +1145,7 @@ def _parse_draft(filepath: Path) -> dict | None:
             excerpt = clean[:150] + ("..." if len(clean) > 150 else "")
             break
 
-    html_content = _md_to_html(text)
+    html_content = _md_to_html(content)
 
     return {
         "title": title,
