@@ -40,5 +40,6 @@
     "deploy_method": "git_push",
     "live_url": "https://domnumb.github.io/asi-builders/insights/",
     "content_dir": "_site/insights/"
-  }
+  },
+  "content_audience": true
 }
