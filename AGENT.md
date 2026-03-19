@@ -54,7 +54,7 @@ git push origin main       # Trigger GH Pages deploy
 
 ## Next actions
 
-1. **Automatiser LinkedIn post** — intégrer publisher.py avec API ou draft pour Pax — complétion : post LinkedIn publié chaque lundi
+1. **Automatiser LinkedIn post** — ✅ PARTIAL (2026-03-19) — `scripts/linkedin-draft.py` créé + premier draft dans `drafts/linkedin-post-weekly.md`. Reste : intégrer avec API LinkedIn ou workflow Pax pour publication effective chaque lundi
 2. **Newsletter email** — Resend ou Buttondown — complétion : subscribers reçoivent le ranking hebdo
 3. **Ajouter repos** — évaluer Mistral, Cohere, Google DeepMind — complétion : config.py mis à jour, scoring validé
 4. **Activer line stats** — `FETCH_LINE_STATS = True` pour scoring plus précis — complétion : complexity scores améliorés
