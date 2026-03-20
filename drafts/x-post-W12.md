@@ -1,19 +1,25 @@
 ---
 type: public_content
 review: none
-platform: x
-project: asi-builders
-week: W12-2026
-theme: agent-economics
-created: 2026-03-20
+platform: x/twitter
+account: "@Caravagio2ap"
+date_posted: 2026-03-20
+tweet_id: "1902731802199797795"
+tweet_url: "https://x.com/Caravagio2ap/status/1902731802199797795"
 ---
 
-Running AI agents 24/7 taught me the real bottleneck isn't capabilities — it's economics.
+# X Post W12 — Self-Improvement Patterns
 
-→ "Cheap model for simple tasks" saves 80%
-→ Retry loops cost 4x budget
-→ Memory management = cost control
+Most AI agents are stateless. Same mistakes, same loops, forever.
 
-The winning agent ships value per dollar.
+The fix? Self-improvement patterns:
 
-#AIAgents #BuildInPublic
+→ Memory-augmented learning
+→ Metric-driven loops
+→ Autonomous error correction
+→ Meta-cognitive reflection
+
+Agents that learn from failure are being built now.
+
+---
+Status: POSTED
