@@ -1,159 +1,222 @@
 #!/usr/bin/env python3
-"""Generate weekly LinkedIn post drafts for ASI Builders.
+"""linkedin-draft.py — Generate weekly LinkedIn post drafts for ASI Builders.
 
-Reads the current framework rankings from src/data/ and produces
-a concise, engaging LinkedIn post highlighting key movements and insights.
+Reads content sources and produces a ready-to-review LinkedIn post draft.
+Designed for Maël's AI agent workflow (Bernard orchestrates, Pax publishes).
 
 Usage:
-    python3 scripts/linkedin-draft.py                # Generate this week's draft
-    python3 scripts/linkedin-draft.py --week 12      # Specific week number
-    python3 scripts/linkedin-draft.py --output FILE  # Write to file instead of stdout
-    python3 scripts/linkedin-draft.py --help          # Show this help
+  python3 scripts/linkedin-draft.py [--topic TOPIC] [--style {insight,ranking,thread}] [--output PATH]
+  python3 scripts/linkedin-draft.py --help
 """
+
 import argparse
 import json
 import os
-import re
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-FRAMEWORKS_TS = PROJECT_ROOT / "src" / "data" / "frameworks.ts"
-RANKINGS_TS = PROJECT_ROOT / "src" / "data" / "rankings.ts"
+# Project root
+PROJECT_ROOT = Path(__file__).parent.parent
 DRAFTS_DIR = PROJECT_ROOT / "drafts"
+CONTENT_INPUT = PROJECT_ROOT / "content-news-input.json"
+DEFAULT_OUTPUT = DRAFTS_DIR / "linkedin-post-weekly.md"
+
+# LinkedIn post constraints
+MAX_CHARS = 3000
+IDEAL_CHARS = 1200  # Sweet spot for engagement
+
+TEMPLATES = {
+    "insight": """# LinkedIn Draft — {date}
+
+## Topic: {topic}
+
+---
+
+**Hook** (première ligne visible sans "voir plus"):
+{hook}
+
+**Corps:**
+{body}
+
+**CTA:**
+{cta}
+
+---
+
+**Hashtags:** {hashtags}
+**Estimated chars:** {char_count}
+**Style:** Insight post
+**Status:** draft — needs Pax review
+""",
+    "ranking": """# LinkedIn Draft — {date}
+
+## Topic: {topic}
+
+---
+
+**Hook:**
+{hook}
+
+**Ranking:**
+{body}
+
+**Takeaway:**
+{cta}
+
+---
+
+**Hashtags:** {hashtags}
+**Estimated chars:** {char_count}
+**Style:** Ranking post
+**Status:** draft — needs Pax review
+""",
+    "thread": """# LinkedIn Draft — {date}
+
+## Topic: {topic}
+
+---
+
+**Post 1/3 — Hook:**
+{hook}
+
+**Post 2/3 — Deep dive:**
+{body}
+
+**Post 3/3 — CTA:**
+{cta}
+
+---
+
+**Hashtags:** {hashtags}
+**Estimated chars:** {char_count}
+**Style:** Thread (carousel alternative)
+**Status:** draft — needs Pax review
+"""
+}
+
+DEFAULT_HASHTAGS = "#AI #AIAgents #BuildWithAI #ASIBuilders"
 
 
-def parse_ts_array(filepath: Path, var_pattern: str) -> list[dict]:
-    """Quick-and-dirty extraction of a TS array-of-objects into Python dicts.
-    Works for simple literals (strings, numbers, booleans). Not a full parser."""
-    if not filepath.exists():
-        return []
-    text = filepath.read_text()
-    # Find the variable assignment
-    match = re.search(rf'{var_pattern}\s*[:=]\s*\[', text)
-    if not match:
-        return []
-    # Extract from the opening [ to its matching ]
-    start = match.end() - 1
-    depth = 0
-    end = start
-    for i, ch in enumerate(text[start:], start):
-        if ch == '[':
-            depth += 1
-        elif ch == ']':
-            depth -= 1
-            if depth == 0:
-                end = i + 1
-                break
-    raw = text[start:end]
-    # Convert TS object literals to JSON-ish
-    # Remove trailing commas, convert single quotes, handle unquoted keys
-    raw = re.sub(r'/\*.*?\*/', '', raw, flags=re.S)  # block comments
-    raw = re.sub(r'//[^\n]*', '', raw)  # line comments
-    raw = re.sub(r"(\w+)\s*:", r'"\1":', raw)  # unquoted keys
-    raw = raw.replace("'", '"')  # single → double quotes
-    raw = re.sub(r',\s*([}\]])', r'\1', raw)  # trailing commas
-    try:
-        return json.loads(raw)
-    except json.JSONDecodeError:
-        return []
+def load_content_sources():
+    """Load available content sources for draft generation."""
+    sources = []
+    
+    # Try content-news-input.json
+    if CONTENT_INPUT.exists():
+        try:
+            with open(CONTENT_INPUT) as f:
+                data = json.load(f)
+            if isinstance(data, list):
+                sources.extend(data)
+            elif isinstance(data, dict) and "items" in data:
+                sources.extend(data["items"])
+        except (json.JSONDecodeError, KeyError):
+            pass
+    
+    # Try existing drafts for context
+    for draft in DRAFTS_DIR.glob("*.md"):
+        if "linkedin" not in draft.name.lower():
+            sources.append({
+                "type": "draft",
+                "path": str(draft),
+                "name": draft.stem
+            })
+    
+    return sources
 
 
-def get_frameworks() -> list[dict]:
-    """Load frameworks from the TS source."""
-    return parse_ts_array(FRAMEWORKS_TS, r'(?:export\s+)?(?:const|let)\s+frameworks')
-
-
-def current_iso_week() -> int:
-    return datetime.now().isocalendar()[1]
-
-
-def generate_post(frameworks: list[dict], week: int) -> str:
-    """Generate a LinkedIn post draft from framework data."""
-    year = datetime.now().year
-    # Sort by score descending (if score field exists)
-    scored = [f for f in frameworks if f.get('score') or f.get('totalScore') or f.get('rank')]
-    if not scored:
-        scored = frameworks[:10]  # fallback: just use order
-
-    # Try to extract a ranking order
-    def rank_key(fw):
-        return -(fw.get('score', 0) or fw.get('totalScore', 0) or (100 - fw.get('rank', 50)))
-    scored.sort(key=rank_key)
-    top5 = scored[:5]
-
-    lines = []
-    lines.append(f"🏗️ AI Agent Framework Rankings — Week {week}, {year}")
-    lines.append("")
-    lines.append("Which frameworks are builders actually choosing to create autonomous AI agents?")
-    lines.append("")
-    lines.append("Here's this week's top 5 from ASI Builders:")
-    lines.append("")
-
-    medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"]
-    for i, fw in enumerate(top5):
-        name = fw.get('name', fw.get('id', f'Framework {i+1}'))
-        desc = fw.get('description', fw.get('tagline', ''))
-        score = fw.get('score') or fw.get('totalScore') or ''
-        score_str = f" ({score}/100)" if score else ""
-        line = f"{medals[i]} {name}{score_str}"
-        if desc:
-            line += f" — {desc[:80]}"
-        lines.append(line)
-
-    lines.append("")
-    lines.append("The AI agent space moves fast. New frameworks ship weekly.")
-    lines.append("We track what matters: real adoption, GitHub activity, docs quality, and community size.")
-    lines.append("")
-    lines.append("👉 Full ranking + methodology: https://asi-builders.com")
-    lines.append("")
-    lines.append("#AIAgents #Frameworks #OpenSource #BuildWithAI #ASIBuilders")
-
-    return "\n".join(lines)
+def generate_draft(topic=None, style="insight", sources=None):
+    """Generate a LinkedIn post draft scaffold."""
+    date = datetime.now().strftime("%Y-%m-%d")
+    week = datetime.now().strftime("W%W")
+    
+    if not topic:
+        topic = f"AI Agents Weekly — {week}"
+    
+    # Build source context summary
+    source_summary = ""
+    if sources:
+        source_lines = []
+        for s in sources[:5]:  # Top 5 sources
+            if isinstance(s, dict):
+                name = s.get("title", s.get("name", s.get("path", "unknown")))
+                source_lines.append(f"  - {name}")
+        if source_lines:
+            source_summary = "\n\nSources available:\n" + "\n".join(source_lines)
+    
+    template = TEMPLATES.get(style, TEMPLATES["insight"])
+    
+    draft = template.format(
+        date=date,
+        topic=topic,
+        hook=f"[WRITE HOOK HERE — max 150 chars, stops the scroll]\n\nContext: {topic}{source_summary}",
+        body=f"[WRITE BODY HERE — {IDEAL_CHARS} chars ideal]\n\nKey points to cover:\n  1. What changed this week in AI agents\n  2. One concrete insight (data or example)\n  3. Your take (opinionated > neutral)",
+        cta="[WRITE CTA HERE — question or action]\n\nExamples: 'What's your stack?' / 'Link in comments' / 'Agree or disagree?'",
+        hashtags=DEFAULT_HASHTAGS,
+        char_count=f"~{IDEAL_CHARS} target"
+    )
+    
+    return draft
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Generate weekly LinkedIn post drafts for ASI Builders",
+        description="Generate LinkedIn post drafts for ASI Builders",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="Example: python3 scripts/linkedin-draft.py --week 12 --output drafts/linkedin-w12.md"
+        epilog="""Examples:
+  python3 scripts/linkedin-draft.py
+  python3 scripts/linkedin-draft.py --topic "Claude 4 changes everything"
+  python3 scripts/linkedin-draft.py --style ranking --topic "Top 5 AI agent frameworks"
+  python3 scripts/linkedin-draft.py --output drafts/linkedin-special.md
+"""
     )
-    parser.add_argument("--week", type=int, default=current_iso_week(),
-                        help="ISO week number (default: current week)")
-    parser.add_argument("--output", "-o", type=str, default=None,
-                        help="Output file path (default: stdout)")
-    parser.add_argument("--json", action="store_true",
-                        help="Output as JSON with metadata")
+    parser.add_argument("--topic", help="Post topic (default: weekly recap)")
+    parser.add_argument("--style", choices=["insight", "ranking", "thread"],
+                       default="insight", help="Post style template")
+    parser.add_argument("--output", default=str(DEFAULT_OUTPUT),
+                       help=f"Output path (default: {DEFAULT_OUTPUT})")
+    parser.add_argument("--list-sources", action="store_true",
+                       help="List available content sources and exit")
+    parser.add_argument("--dry-run", action="store_true",
+                       help="Print draft to stdout instead of writing file")
+    
     args = parser.parse_args()
-
-    frameworks = get_frameworks()
-    if not frameworks:
-        print("⚠️  Could not parse frameworks from src/data/frameworks.ts", file=sys.stderr)
-        print("   Generating template post without ranking data.", file=sys.stderr)
-
-    post = generate_post(frameworks, args.week)
-
-    if args.json:
-        output = json.dumps({
-            "week": args.week,
-            "year": datetime.now().year,
-            "generated_at": datetime.now().isoformat(),
-            "frameworks_count": len(frameworks),
-            "post": post,
-            "char_count": len(post),
-        }, indent=2)
-    else:
-        output = post
-
-    if args.output:
-        outpath = Path(args.output)
-        outpath.parent.mkdir(parents=True, exist_ok=True)
-        outpath.write_text(output)
-        print(f"✅ Draft written to {outpath}", file=sys.stderr)
-    else:
-        print(output)
+    
+    # Load sources
+    sources = load_content_sources()
+    
+    if args.list_sources:
+        print(f"Found {len(sources)} content sources:")
+        for s in sources:
+            if isinstance(s, dict):
+                print(f"  - {s.get('title', s.get('name', s.get('path', 'unknown')))}")
+            else:
+                print(f"  - {s}")
+        return 0
+    
+    # Generate
+    draft = generate_draft(topic=args.topic, style=args.style, sources=sources)
+    
+    if args.dry_run:
+        print(draft)
+        print(f"\n--- Would write to: {args.output} ---")
+        return 0
+    
+    # Write
+    output_path = Path(args.output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    with open(output_path, "w") as f:
+        f.write(draft)
+    
+    print(f"✅ Draft written to {output_path}")
+    print(f"   Topic: {args.topic or 'weekly recap'}")
+    print(f"   Style: {args.style}")
+    print(f"   Sources: {len(sources)} available")
+    print(f"   Next: Review and edit the draft, then publish via Pax")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main() or 0)
