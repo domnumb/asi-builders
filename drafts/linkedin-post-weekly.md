@@ -1,13 +1,13 @@
 # LinkedIn Draft — 2026-03-21
 
-## Topic: AI agents are eating SaaS — Week 12 insights
+## Topic: AI Agents Weekly — W11
 
 ---
 
 **Hook** (première ligne visible sans "voir plus"):
 [WRITE HOOK HERE — max 150 chars, stops the scroll]
 
-Context: AI agents are eating SaaS — Week 12 insights
+Context: AI Agents Weekly — W11
 
 Sources available:
   - x-thread-W12
