@@ -2,29 +2,61 @@
 type: public_content
 review: none
 platform: linkedin
-week: "2026-W12"
-generated: "2026-03-21T22:25:00Z"
+author: Maël Vanderlinden
+week: W12-2026
+generated: 2026-03-22
 status: draft
+tone: practitioner, direct
 ---
 
-🏗️ ASI Builders — Week 12
+# LinkedIn Post — W12 2026
 
-Every week I track who's actually pushing AI forward — not companies, individual developers.
+## Option A: "The agent stack is splitting"
 
-Here's what stood out this week across 21 open-source repos (Anthropic, OpenAI, LangChain, DeepSeek…):
+The AI agent stack is splitting into two worlds.
 
-→ Harrison Chase (@hwchase17) shipped token usage tracking in LangChain streaming — finally, you can monitor costs in real-time during streamed responses. Score: 8.0/10
+World 1: Managed agent platforms.
+You get a dashboard, pre-built tools, guardrails, and a monthly invoice.
+Salesforce, ServiceNow, Microsoft Copilot Studio — enterprise-grade, enterprise-priced.
 
-→ Erick Friis (@efriis) updated LangChain core for Python 3.13 support — unglamorous but critical infrastructure work
+World 2: DIY agent infrastructure.
+You wire LLMs to your own tools, build your own memory layer, handle your own orchestration.
+OpenClaw, LangGraph, CrewAI, custom setups — operator-grade, operator-maintained.
 
-→ Eugene Yurtsev (@eyurtsev) added a native `id` field to LangChain's Document model — architectural improvement that simplifies the entire retrieval pipeline
+Here's what I've noticed after running autonomous agents 24/7 for months:
 
-→ Bagatur (@baskaryan) overhauled the API reference docs — the kind of contribution that multiplies every other developer's productivity
+The gap isn't capability. Both worlds can do impressive things.
 
-📊 50 human contributors scored this week across langchain, vllm, dspy, and more.
+The gap is feedback loops.
 
-Full leaderboard: https://domnumb.github.io/asi-builders/
+In World 2, when your agent hallucinates sales data at 3am, you find out at 3am. You fix the guard. You add an invariant. The system gets smarter because YOU got smarter.
 
-The people building AGI aren't writing blog posts about it. They're shipping PRs.
+In World 1, you file a ticket.
 
-#OpenSource #AI #LangChain #ASIBuilders #BuildInPublic
+I'm not saying one is better. I'm saying they produce different kinds of operators.
+
+And in 2026, the operator matters more than the model.
+
+---
+
+What's your stack? Managed or DIY?
+
+## Option B: "What agents actually need (it's not a better model)"
+
+Hot take: the next model upgrade won't fix your agent's biggest problem.
+
+After running autonomous agents across multiple projects — content, e-commerce, research — here's what actually breaks things:
+
+1. **Memory corruption** — not forgetting, but remembering wrong. An agent that confidently reports fake sales numbers is worse than one that says "I don't know."
+
+2. **Action verification** — agents love to say "done" without checking. The fix isn't prompt engineering. It's hardcoded verification gates.
+
+3. **Cross-project contamination** — when an agent works on multiple projects, context bleeds. Your oud oil brand suddenly gets mentioned in your AI newsletter.
+
+None of these are model problems. They're infrastructure problems.
+
+The builders who figure this out first will have a 12-month head start on everyone waiting for GPT-6 to "solve agents."
+
+---
+
+Building agents? What's your #1 infrastructure challenge?
