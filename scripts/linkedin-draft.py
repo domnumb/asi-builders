@@ -1,194 +1,158 @@
 #!/usr/bin/env python3
-"""linkedin-draft.py — Generate weekly LinkedIn post drafts for ASI Builders.
+"""Generate weekly LinkedIn post drafts for ASI Builders.
+
+Reads the current framework rankings from src/data/ and produces
+a concise, engaging LinkedIn post highlighting key movements and insights.
 
 Usage:
-    python3 scripts/linkedin-draft.py [--help] [--output PATH] [--topic TOPIC]
-
-Generates a structured LinkedIn post draft about AI agents/builders
-that can be reviewed and posted by Pax.
+    python3 scripts/linkedin-draft.py                # Generate this week's draft
+    python3 scripts/linkedin-draft.py --week 12      # Specific week number
+    python3 scripts/linkedin-draft.py --output FILE  # Write to file instead of stdout
+    python3 scripts/linkedin-draft.py --help          # Show this help
 """
-
 import argparse
 import json
 import os
+import re
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-# Project root
-ROOT = Path(__file__).parent.parent
-DRAFTS_DIR = ROOT / "drafts"
-
-# Weekly themes rotation
-THEMES = [
-    {
-        "topic": "agent-frameworks",
-        "hook": "The AI agent framework landscape is shifting fast.",
-        "angles": [
-            "Which frameworks are production-ready vs. demo-only?",
-            "What separates toy agents from reliable ones?",
-            "The hidden cost of agent orchestration"
-        ]
-    },
-    {
-        "topic": "agent-reliability",
-        "hook": "Most AI agents fail silently. Here's what the best ones do differently.",
-        "angles": [
-            "Verification loops vs. hope-based deployment",
-            "Why hallucination detection is table stakes",
-            "The 3 failure modes every agent builder should know"
-        ]
-    },
-    {
-        "topic": "agent-economics",
-        "hook": "Running AI agents 24/7 costs more than you think.",
-        "angles": [
-            "Token economics: when agents become expensive",
-            "The business case for autonomous vs. copilot agents",
-            "ROI frameworks for agent deployment"
-        ]
-    },
-    {
-        "topic": "agent-safety",
-        "hook": "Your AI agent has more access than your junior dev. Are you OK with that?",
-        "angles": [
-            "Capability boundaries: what agents should NOT do",
-            "The principle of least privilege for AI agents",
-            "When agents go wrong: real incident patterns"
-        ]
-    },
-    {
-        "topic": "building-in-public",
-        "hook": "I've been running autonomous AI agents for 3 months. Here's what I learned.",
-        "angles": [
-            "The gap between demo and production",
-            "What breaks first when you deploy agents",
-            "Lessons from 10,000+ agent cycles"
-        ]
-    }
-]
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+FRAMEWORKS_TS = PROJECT_ROOT / "src" / "data" / "frameworks.ts"
+RANKINGS_TS = PROJECT_ROOT / "src" / "data" / "rankings.ts"
+DRAFTS_DIR = PROJECT_ROOT / "drafts"
 
 
-def get_week_theme(topic: str | None = None) -> dict:
-    """Get theme for current week or by topic."""
-    if topic:
-        for theme in THEMES:
-            if theme["topic"] == topic:
-                return theme
-        print(f"Unknown topic: {topic}. Available: {[t['topic'] for t in THEMES]}")
-        sys.exit(1)
-    
-    # Rotate based on ISO week number
-    week_num = datetime.now().isocalendar()[1]
-    return THEMES[week_num % len(THEMES)]
+def parse_ts_array(filepath: Path, var_pattern: str) -> list[dict]:
+    """Quick-and-dirty extraction of a TS array-of-objects into Python dicts.
+    Works for simple literals (strings, numbers, booleans). Not a full parser."""
+    if not filepath.exists():
+        return []
+    text = filepath.read_text()
+    # Find the variable assignment
+    match = re.search(rf'{var_pattern}\s*[:=]\s*\[', text)
+    if not match:
+        return []
+    # Extract from the opening [ to its matching ]
+    start = match.end() - 1
+    depth = 0
+    end = start
+    for i, ch in enumerate(text[start:], start):
+        if ch == '[':
+            depth += 1
+        elif ch == ']':
+            depth -= 1
+            if depth == 0:
+                end = i + 1
+                break
+    raw = text[start:end]
+    # Convert TS object literals to JSON-ish
+    # Remove trailing commas, convert single quotes, handle unquoted keys
+    raw = re.sub(r'/\*.*?\*/', '', raw, flags=re.S)  # block comments
+    raw = re.sub(r'//[^\n]*', '', raw)  # line comments
+    raw = re.sub(r"(\w+)\s*:", r'"\1":', raw)  # unquoted keys
+    raw = raw.replace("'", '"')  # single → double quotes
+    raw = re.sub(r',\s*([}\]])', r'\1', raw)  # trailing commas
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        return []
 
 
-def generate_draft(theme: dict) -> str:
-    """Generate a LinkedIn post draft from theme."""
-    now = datetime.now()
-    week_label = f"W{now.isocalendar()[1]}"
-    
-    # LinkedIn post structure (optimal: 1200-1500 chars)
-    draft = f"""---
-type: linkedin-draft
-project: asi-builders
-topic: {theme['topic']}
-week: {week_label}
-generated: {now.strftime('%Y-%m-%d %H:%M')}
-status: draft
-review: none
----
+def get_frameworks() -> list[dict]:
+    """Load frameworks from the TS source."""
+    return parse_ts_array(FRAMEWORKS_TS, r'(?:export\s+)?(?:const|let)\s+frameworks')
 
-# LinkedIn Post Draft — {week_label} ({theme['topic']})
 
-## Hook (first 2 lines — visible before "see more")
+def current_iso_week() -> int:
+    return datetime.now().isocalendar()[1]
 
-{theme['hook']}
-↓
 
-## Body
+def generate_post(frameworks: list[dict], week: int) -> str:
+    """Generate a LinkedIn post draft from framework data."""
+    year = datetime.now().year
+    # Sort by score descending (if score field exists)
+    scored = [f for f in frameworks if f.get('score') or f.get('totalScore') or f.get('rank')]
+    if not scored:
+        scored = frameworks[:10]  # fallback: just use order
 
-**Angle options (pick one, expand to 3-5 short paragraphs):**
+    # Try to extract a ranking order
+    def rank_key(fw):
+        return -(fw.get('score', 0) or fw.get('totalScore', 0) or (100 - fw.get('rank', 50)))
+    scored.sort(key=rank_key)
+    top5 = scored[:5]
 
-"""
-    
-    for i, angle in enumerate(theme['angles'], 1):
-        draft += f"{i}. {angle}\n"
-    
-    draft += f"""
-## Draft (edit this)
+    lines = []
+    lines.append(f"🏗️ AI Agent Framework Rankings — Week {week}, {year}")
+    lines.append("")
+    lines.append("Which frameworks are builders actually choosing to create autonomous AI agents?")
+    lines.append("")
+    lines.append("Here's this week's top 5 from ASI Builders:")
+    lines.append("")
 
-{theme['hook']}
+    medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"]
+    for i, fw in enumerate(top5):
+        name = fw.get('name', fw.get('id', f'Framework {i+1}'))
+        desc = fw.get('description', fw.get('tagline', ''))
+        score = fw.get('score') or fw.get('totalScore') or ''
+        score_str = f" ({score}/100)" if score else ""
+        line = f"{medals[i]} {name}{score_str}"
+        if desc:
+            line += f" — {desc[:80]}"
+        lines.append(line)
 
-After running autonomous AI agents in production for months,
-here's what actually matters:
+    lines.append("")
+    lines.append("The AI agent space moves fast. New frameworks ship weekly.")
+    lines.append("We track what matters: real adoption, GitHub activity, docs quality, and community size.")
+    lines.append("")
+    lines.append("👉 Full ranking + methodology: https://asi-builders.com")
+    lines.append("")
+    lines.append("#AIAgents #Frameworks #OpenSource #BuildWithAI #ASIBuilders")
 
-1/ [Point 1 — concrete, from experience]
-
-2/ [Point 2 — counterintuitive insight]
-
-3/ [Point 3 — actionable takeaway]
-
-The future of AI isn't about smarter models.
-It's about more reliable systems.
-
----
-
-What's your experience building with AI agents?
-
-#AIAgents #BuildInPublic #ASI #AIEngineering
-
-## Notes for Pax
-- Target: 1200-1500 characters final
-- Post between Tue-Thu, 8-10am CET for best reach
-- Add a personal anecdote from Bernard/OpenClaw experience
-- Consider adding a carousel (3-5 slides) for higher engagement
-"""
-    return draft
+    return "\n".join(lines)
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Generate weekly LinkedIn post drafts for ASI Builders"
+        description="Generate weekly LinkedIn post drafts for ASI Builders",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="Example: python3 scripts/linkedin-draft.py --week 12 --output drafts/linkedin-w12.md"
     )
-    parser.add_argument(
-        "--topic", 
-        choices=[t["topic"] for t in THEMES],
-        help="Force a specific topic (default: auto-rotate by week)"
-    )
-    parser.add_argument(
-        "--output", "-o",
-        help="Output file path (default: drafts/linkedin-post-WXX.md)"
-    )
-    parser.add_argument(
-        "--list-topics",
-        action="store_true",
-        help="List available topics and exit"
-    )
+    parser.add_argument("--week", type=int, default=current_iso_week(),
+                        help="ISO week number (default: current week)")
+    parser.add_argument("--output", "-o", type=str, default=None,
+                        help="Output file path (default: stdout)")
+    parser.add_argument("--json", action="store_true",
+                        help="Output as JSON with metadata")
     args = parser.parse_args()
-    
-    if args.list_topics:
-        for t in THEMES:
-            print(f"  {t['topic']:25s} — {t['hook'][:60]}...")
-        return
-    
-    theme = get_week_theme(args.topic)
-    draft = generate_draft(theme)
-    
-    # Output path
-    if args.output:
-        out_path = Path(args.output)
+
+    frameworks = get_frameworks()
+    if not frameworks:
+        print("⚠️  Could not parse frameworks from src/data/frameworks.ts", file=sys.stderr)
+        print("   Generating template post without ranking data.", file=sys.stderr)
+
+    post = generate_post(frameworks, args.week)
+
+    if args.json:
+        output = json.dumps({
+            "week": args.week,
+            "year": datetime.now().year,
+            "generated_at": datetime.now().isoformat(),
+            "frameworks_count": len(frameworks),
+            "post": post,
+            "char_count": len(post),
+        }, indent=2)
     else:
-        week_label = f"W{datetime.now().isocalendar()[1]}"
-        DRAFTS_DIR.mkdir(exist_ok=True)
-        out_path = DRAFTS_DIR / f"linkedin-post-{week_label}.md"
-    
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(draft)
-    print(f"✅ Draft generated: {out_path}")
-    print(f"   Topic: {theme['topic']}")
-    print(f"   Hook: {theme['hook'][:60]}...")
-    print(f"   Next: Review and personalize before posting")
+        output = post
+
+    if args.output:
+        outpath = Path(args.output)
+        outpath.parent.mkdir(parents=True, exist_ok=True)
+        outpath.write_text(output)
+        print(f"✅ Draft written to {outpath}", file=sys.stderr)
+    else:
+        print(output)
 
 
 if __name__ == "__main__":
