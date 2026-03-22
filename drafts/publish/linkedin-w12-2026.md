@@ -2,61 +2,50 @@
 type: public_content
 review: none
 platform: linkedin
-author: Maël Vanderlinden
 week: W12-2026
-generated: 2026-03-22
+author: maelvanderlinden
+date: 2026-03-22
 status: draft
-tone: practitioner, direct
+tags: [ai-agents, video-ai, wan-2.1, weekly]
 ---
 
 # LinkedIn Post — W12 2026
 
-## Option A: "The agent stack is splitting"
+## Hook
 
-The AI agent stack is splitting into two worlds.
+I tested Wan 2.1 (Alibaba's open-source video model) against Veo 3.
 
-World 1: Managed agent platforms.
-You get a dashboard, pre-built tools, guardrails, and a monthly invoice.
-Salesforce, ServiceNow, Microsoft Copilot Studio — enterprise-grade, enterprise-priced.
+Here's what most benchmarks won't tell you:
 
-World 2: DIY agent infrastructure.
-You wire LLMs to your own tools, build your own memory layer, handle your own orchestration.
-OpenClaw, LangGraph, CrewAI, custom setups — operator-grade, operator-maintained.
+## Body
 
-Here's what I've noticed after running autonomous agents 24/7 for months:
+Wan 2.1 is the first open-source model that genuinely competes with closed APIs on image-to-video.
 
-The gap isn't capability. Both worlds can do impressive things.
+3 things I noticed after running both through the same prompts:
 
-The gap is feedback loops.
+1. **Motion coherence** — Wan 2.1 holds subject identity across 4-second clips better than expected. Not Veo 3 level, but 80% there at 0% of the API cost.
 
-In World 2, when your agent hallucinates sales data at 3am, you find out at 3am. You fix the guard. You add an invariant. The system gets smarter because YOU got smarter.
+2. **The open-source advantage is real** — You can run Wan 2.1 locally. Fine-tune it. Chain it with other models. That's not a feature — it's a different business model entirely.
 
-In World 1, you file a ticket.
+3. **Speed vs quality tradeoff** — Veo 3 still wins on cinematic quality. But for content creators who need 10 clips/day (not 1 perfect shot/week), Wan 2.1 changes the math.
 
-I'm not saying one is better. I'm saying they produce different kinds of operators.
+We published a full head-to-head comparison on asi-builders.com with prompt-by-prompt results.
 
-And in 2026, the operator matters more than the model.
+The takeaway isn't "open-source wins" or "closed wins."
 
----
+It's that the gap is closing fast enough that your video pipeline strategy needs to account for both.
 
-What's your stack? Managed or DIY?
+## CTA
 
-## Option B: "What agents actually need (it's not a better model)"
+What's your current stack for AI video? Still API-only or running models locally?
 
-Hot take: the next model upgrade won't fix your agent's biggest problem.
-
-After running autonomous agents across multiple projects — content, e-commerce, research — here's what actually breaks things:
-
-1. **Memory corruption** — not forgetting, but remembering wrong. An agent that confidently reports fake sales numbers is worse than one that says "I don't know."
-
-2. **Action verification** — agents love to say "done" without checking. The fix isn't prompt engineering. It's hardcoded verification gates.
-
-3. **Cross-project contamination** — when an agent works on multiple projects, context bleeds. Your oud oil brand suddenly gets mentioned in your AI newsletter.
-
-None of these are model problems. They're infrastructure problems.
-
-The builders who figure this out first will have a 12-month head start on everyone waiting for GPT-6 to "solve agents."
+→ Full analysis: asi-builders.com
 
 ---
 
-Building agents? What's your #1 infrastructure challenge?
+## Notes for Pax
+- Tone: practitioner sharing findings, not thought leader pontificating
+- Length: ~180 words (LinkedIn sweet spot)
+- No hashtag spam — max 3 if needed: #AIVideo #OpenSource #VideoAI
+- Image suggestion: side-by-side frame comparison from the article
+- Post time: Tuesday 9h or Wednesday 12h (LinkedIn peak FR)
