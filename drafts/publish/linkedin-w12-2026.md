@@ -2,50 +2,55 @@
 type: public_content
 review: none
 platform: linkedin
+author: Maël Vanderlinden
 week: W12-2026
-author: maelvanderlinden
-date: 2026-03-22
-status: draft
-tags: [ai-agents, video-ai, wan-2.1, weekly]
+date_drafted: 2026-03-22
+status: draft_for_pax
+topic: Wan 2.1 open-source AI video benchmark
+sources:
+  - https://github.com/Wan-Video/Wan2.1
+  - https://asi-builders.com/posts/wan-2-1-vs-veo-3-benchmark
+  - https://venturebeat.com (Wan 2.1 coverage)
 ---
 
 # LinkedIn Post — W12 2026
 
-## Hook
+**Hook:**
+Wan 2.1 just dropped. Open-source. 14B parameters. And it's competitive with Veo 3.
 
-I tested Wan 2.1 (Alibaba's open-source video model) against Veo 3.
+Here's what that actually means for builders:
 
-Here's what most benchmarks won't tell you:
+**Body:**
+I've been tracking AI video generation tools for months. The landscape shifted this week.
 
-## Body
+Wan 2.1 (Alibaba) ships with:
+→ Text-to-video (480p to 720p, up to 5s clips)
+→ Image-to-video with strong motion control
+→ Apache 2.0 license — run it on your own GPUs
+→ 14B param model that punches way above its weight
 
-Wan 2.1 is the first open-source model that genuinely competes with closed APIs on image-to-video.
+We benchmarked it head-to-head against Veo 3 (Google) on 5 criteria:
+- Motion coherence
+- Text faithfulness
+- Visual quality
+- Cost per minute
+- Accessibility
 
-3 things I noticed after running both through the same prompts:
+The result? Wan 2.1 wins on cost and accessibility. Veo 3 wins on raw quality and motion.
 
-1. **Motion coherence** — Wan 2.1 holds subject identity across 4-second clips better than expected. Not Veo 3 level, but 80% there at 0% of the API cost.
+But here's the real insight: the gap is closing FAST. 6 months ago, open-source video AI was a toy. Now it's a production tool.
 
-2. **The open-source advantage is real** — You can run Wan 2.1 locally. Fine-tune it. Chain it with other models. That's not a feature — it's a different business model entirely.
+If you're building video workflows and still paying $0.50/second for API calls — it's time to benchmark open-source alternatives.
 
-3. **Speed vs quality tradeoff** — Veo 3 still wins on cinematic quality. But for content creators who need 10 clips/day (not 1 perfect shot/week), Wan 2.1 changes the math.
+Full comparison on our site (link in comments).
 
-We published a full head-to-head comparison on asi-builders.com with prompt-by-prompt results.
-
-The takeaway isn't "open-source wins" or "closed wins."
-
-It's that the gap is closing fast enough that your video pipeline strategy needs to account for both.
-
-## CTA
-
-What's your current stack for AI video? Still API-only or running models locally?
-
-→ Full analysis: asi-builders.com
+**CTA:**
+What's your current AI video stack? Curious what builders are actually shipping with.
 
 ---
 
-## Notes for Pax
-- Tone: practitioner sharing findings, not thought leader pontificating
-- Length: ~180 words (LinkedIn sweet spot)
-- No hashtag spam — max 3 if needed: #AIVideo #OpenSource #VideoAI
-- Image suggestion: side-by-side frame comparison from the article
-- Post time: Tuesday 9h or Wednesday 12h (LinkedIn peak FR)
+**Posting notes for Pax:**
+- Link to drop in comments: https://asi-builders.com/posts/wan-2-1-vs-veo-3-benchmark
+- Best posting time: Monday 9-10 AM CET
+- Hashtags (if desired): #AIVideo #OpenSource #VideoGeneration #BuildersOnly
+- Tone: practitioner, not hype. Data-driven.
