@@ -1,17 +1,145 @@
 {
-  "project": "asi-builders",
-  "domain": "AI open source contributions and emerging AI developer tools",
-  "queries": [
-    "AI open source contributions GitHub March 2026",
-    "Anthropic open source releases 2026",
-    "OpenAI open source projects 2026",
-    "DeepSeek open source model releases",
-    "emerging AI startups developer tools 2026",
-    "AI leaderboard GitHub contributors weekly"
+  "sources": [
+    {
+      "id": "x-thread-W12",
+      "title": "X Thread — AI Agent Frameworks W12",
+      "type": "x-thread",
+      "date": "2026-03-22",
+      "status": "published",
+      "summary": "7-tweet thread covering LangGraph vs CrewAI vs AutoGen convergence, NVIDIA AgentIQ launch, deployment patterns shifting to hybrid local/cloud."
+    },
+    {
+      "id": "x-post-deployment",
+      "title": "X Post — Agent Deployment Patterns",
+      "type": "x-post",
+      "date": "2026-03-20",
+      "status": "published",
+      "summary": "Single tweet on the shift from cloud-only to hybrid deployment for AI agents."
+    },
+    {
+      "id": "ai-agent-frameworks-2025-comparison",
+      "title": "AI Agent Frameworks Comparison 2025-2026",
+      "type": "research",
+      "date": "2026-03-18",
+      "status": "used",
+      "url": "https://www.shakudo.io/blog/top-9-ai-agent-frameworks",
+      "summary": "Shakudo's ranking of top 9 frameworks: LangGraph, CrewAI, AutoGen, Semantic Kernel, etc. Good for positioning takes."
+    },
+    {
+      "id": "x-post-W12",
+      "title": "X Post — W12 Recap Teaser",
+      "type": "x-post",
+      "date": "2026-03-21",
+      "status": "published",
+      "summary": "Teaser post for the W12 thread."
+    },
+    {
+      "id": "2026-03-19-enterprise-ai-agents-hitting-wall",
+      "title": "Enterprise AI Agents Hitting a Wall",
+      "type": "research",
+      "date": "2026-03-19",
+      "status": "used",
+      "url": "https://www.ibm.com/think/news/ai-tech-trends-predictions-2026",
+      "summary": "IBM's 2026 predictions: agent identity management, governance as board-level concern, scaling challenges."
+    },
+    {
+      "id": "2026-03-22-google-a2a-protocol",
+      "title": "Google Agent2Agent (A2A) Protocol Launch",
+      "type": "research",
+      "date": "2026-03-22",
+      "status": "fresh",
+      "url": "https://blog.google/technology/ai/agent2agent-protocol/",
+      "summary": "Google introduces A2A, an open protocol for AI agent interoperability. 50+ partners including Salesforce, SAP, ServiceNow. Game-changer for multi-vendor agent ecosystems."
+    },
+    {
+      "id": "2026-03-17-anthropic-agent-sdk",
+      "title": "Anthropic Claude Agent SDK Open Source",
+      "type": "research",
+      "date": "2026-03-17",
+      "status": "fresh",
+      "url": "https://www.anthropic.com/news/agent-sdk",
+      "summary": "Anthropic open-sources Agent SDK with tool use, guardrails, multi-agent orchestration. Reference implementations included."
+    },
+    {
+      "id": "2026-03-18-autogen-v05",
+      "title": "Microsoft AutoGen v0.5 — Multi-Agent Patterns",
+      "type": "research",
+      "date": "2026-03-18",
+      "status": "fresh",
+      "url": "https://microsoft.github.io/autogen/blog/2026/03/autogen-v05",
+      "summary": "AutoGen v0.5 ships declarative agent graphs, improved memory, native MCP support. Enterprise-grade reliability focus."
+    },
+    {
+      "id": "2026-03-16-openai-agents-sdk-10k",
+      "title": "OpenAI Agents SDK — 10K Stars in First Week",
+      "type": "research",
+      "date": "2026-03-16",
+      "status": "fresh",
+      "url": "https://github.com/openai/openai-agents-python",
+      "summary": "OpenAI's open-source Agents SDK rapid adoption. Handoffs, guardrails, tracing, MCP integration. Community building custom frameworks on top."
+    },
+    {
+      "id": "2026-03-19-langgraph-cloud-ga",
+      "title": "LangGraph Cloud GA — Managed Agent Deployment",
+      "type": "research",
+      "date": "2026-03-19",
+      "status": "fresh",
+      "url": "https://blog.langchain.dev/langgraph-cloud-ga/",
+      "summary": "LangGraph Cloud reaches GA with persistence, human-in-the-loop, streaming. Managed platform for stateful agents."
+    },
+    {
+      "id": "2026-03-19-gartner-40pct-agents",
+      "title": "Gartner: 40% Enterprise Agent Adoption by EOY 2026",
+      "type": "research",
+      "date": "2026-03-19",
+      "status": "fresh",
+      "url": "https://www.gartner.com/en/newsroom/press-releases/2026-03-ai-agents-enterprise",
+      "summary": "Gartner predicts 40% enterprise AI agent adoption. Governance and identity management top barriers. Start single-domain before multi-agent."
+    },
+    {
+      "id": "2026-03-17-mckinsey-agents-2.6T",
+      "title": "McKinsey: AI Agents — $2.6T Productivity Unlock",
+      "type": "research",
+      "date": "2026-03-17",
+      "status": "fresh",
+      "url": "https://www.mckinsey.com/capabilities/mckinsey-digital/our-insights/ai-agents-economic-impact",
+      "summary": "McKinsey estimates $2.6T annual productivity gains by 2028. Key sectors: financial services, healthcare, software development."
+    },
+    {
+      "id": "2026-03-20-agent-observability",
+      "title": "Agent Observability: LangSmith vs Arize vs Langfuse",
+      "type": "research",
+      "date": "2026-03-20",
+      "status": "fresh",
+      "url": "https://thenewstack.io/agent-observability-the-new-devops/",
+      "summary": "Agent observability as the new DevOps. Comparison of LangSmith, Arize Phoenix, Langfuse for tracing and monitoring multi-agent systems."
+    },
+    {
+      "id": "2026-03-16-deloitte-agent-governance",
+      "title": "Deloitte: AI Agent Governance Frameworks",
+      "type": "research",
+      "date": "2026-03-16",
+      "status": "fresh",
+      "url": "https://www2.deloitte.com/insights/ai-agent-governance-2026",
+      "summary": "Comprehensive governance framework: identity, access control, audit trails, liability in multi-agent enterprise deployments."
+    },
+    {
+      "id": "2026-03-18-aws-bedrock-blueprints",
+      "title": "AWS Bedrock Agent Blueprints — Pre-built Enterprise Patterns",
+      "type": "research",
+      "date": "2026-03-18",
+      "status": "fresh",
+      "url": "https://aws.amazon.com/blogs/aws/bedrock-agent-blueprints/",
+      "summary": "15 pre-built agent blueprints for enterprise: customer service, doc processing, code review, data analysis. Native guardrails."
+    }
   ],
-  "format": "analysis",
-  "audience": "developers and AI open source enthusiasts",
-  "tone": "technical but accessible, data-driven",
-  "max_words": 800,
-  "output_path": "drafts/weekly-ai-open-source-2026-03-18.md"
+  "last_updated": "2026-03-22T09:30:00Z",
+  "next_content_cycle": "W13",
+  "w13_themes": [
+    "SDK wars: Anthropic vs OpenAI vs Microsoft — every major lab now has an agent SDK",
+    "Google A2A protocol — interoperability as the next battleground",
+    "Enterprise readiness: Gartner 40%, McKinsey $2.6T, but governance gap is real",
+    "Agent observability emerging as critical infra layer",
+    "LangGraph Cloud GA — managed vs self-hosted agent deployment"
+  ]
 }
