@@ -1,0 +1,123 @@
+{
+  "week": 12,
+  "year": 2026,
+  "date": "2026-03-22",
+  "rankings": [
+    {
+      "rank": 1,
+      "name": "OpenAI (Operator + Codex)",
+      "score": 94,
+      "delta": 1,
+      "highlights": [
+        "Operator agent expanding to more countries",
+        "Codex code agent gaining enterprise traction",
+        "Deep research agent now integrated in ChatGPT Pro"
+      ]
+    },
+    {
+      "rank": 2,
+      "name": "Anthropic (Claude Agent SDK)",
+      "score": 92,
+      "delta": 1,
+      "highlights": [
+        "Claude Agent SDK adoption accelerating in enterprise",
+        "Computer use and tool-use benchmarks leading industry",
+        "Model Context Protocol becoming de facto standard"
+      ]
+    },
+    {
+      "rank": 3,
+      "name": "Google DeepMind (Gemini Agents)",
+      "score": 88,
+      "delta": 0,
+      "highlights": [
+        "Project Mariner browser agent in limited preview",
+        "Gemini 2.5 Pro agentic capabilities strong",
+        "Google Agentspace for enterprise gaining momentum"
+      ]
+    },
+    {
+      "rank": 4,
+      "name": "Microsoft (Copilot Studio + AutoGen)",
+      "score": 85,
+      "delta": 0,
+      "highlights": [
+        "Copilot Studio autonomous agents in GA",
+        "AutoGen v0.4 multi-agent framework maturing",
+        "Azure AI Agent Service expanding capabilities"
+      ]
+    },
+    {
+      "rank": 5,
+      "name": "CrewAI",
+      "score": 78,
+      "delta": 2,
+      "highlights": [
+        "Enterprise tier gaining Fortune 500 clients",
+        "CrewAI Flows simplifying complex orchestration",
+        "Growing open-source community momentum"
+      ]
+    },
+    {
+      "rank": 6,
+      "name": "LangChain (LangGraph)",
+      "score": 76,
+      "delta": -1,
+      "highlights": [
+        "LangGraph Studio for visual agent debugging",
+        "LangSmith observability improving",
+        "Competition from simpler frameworks increasing"
+      ]
+    },
+    {
+      "rank": 7,
+      "name": "Salesforce (Agentforce)",
+      "score": 73,
+      "delta": 0,
+      "highlights": [
+        "Agentforce 2.0 with multi-agent orchestration",
+        "CRM-native agents differentiating from generic platforms",
+        "Strong enterprise pipeline"
+      ]
+    },
+    {
+      "rank": 8,
+      "name": "Amazon (Bedrock Agents)",
+      "score": 70,
+      "delta": 1,
+      "highlights": [
+        "Multi-agent collaboration feature released",
+        "AWS enterprise install base advantage",
+        "Nova models improving agent task completion"
+      ]
+    },
+    {
+      "rank": 9,
+      "name": "Mistral (Le Chat Agents)",
+      "score": 65,
+      "delta": 0,
+      "highlights": [
+        "Le Chat with canvas and web search",
+        "European sovereignty positioning strong",
+        "Agent capabilities still behind US leaders"
+      ]
+    },
+    {
+      "rank": 10,
+      "name": "Hugging Face (smolagents)",
+      "score": 62,
+      "delta": 0,
+      "highlights": [
+        "smolagents framework lightweight and popular",
+        "Open-source agent ecosystem growing",
+        "Community-driven approach differentiating"
+      ]
+    }
+  ],
+  "trend": "The agent builder war is consolidating around two models: platform-native (OpenAI, Anthropic, Google building agents INTO their products) vs. framework-agnostic (CrewAI, LangGraph letting you build ON TOP of any model). Week 12 shows platform-native pulling ahead on capabilities while framework-agnostic players compete on flexibility and price.",
+  "sources": [
+    "https://techcrunch.com",
+    "https://venturebeat.com",
+    "https://the-decoder.com"
+  ]
+}
