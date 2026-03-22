@@ -1,13 +1,13 @@
 # LinkedIn Draft — 2026-03-22
 
-## Topic: AI Agents Weekly — W11
+## Topic: W12 2026 Top Open Source AI Contributors
 
 ---
 
-**Hook** (première ligne visible sans "voir plus"):
+**Hook:**
 [WRITE HOOK HERE — max 150 chars, stops the scroll]
 
-Context: AI Agents Weekly — W11
+Context: W12 2026 Top Open Source AI Contributors
 
 Sources available:
   - x-thread-W12
@@ -16,7 +16,7 @@ Sources available:
   - x-post-W12
   - 2026-03-19-enterprise-ai-agents-hitting-wall
 
-**Corps:**
+**Ranking:**
 [WRITE BODY HERE — 1200 chars ideal]
 
 Key points to cover:
@@ -24,7 +24,7 @@ Key points to cover:
   2. One concrete insight (data or example)
   3. Your take (opinionated > neutral)
 
-**CTA:**
+**Takeaway:**
 [WRITE CTA HERE — question or action]
 
 Examples: 'What's your stack?' / 'Link in comments' / 'Agree or disagree?'
@@ -33,5 +33,5 @@ Examples: 'What's your stack?' / 'Link in comments' / 'Agree or disagree?'
 
 **Hashtags:** #AI #AIAgents #BuildWithAI #ASIBuilders
 **Estimated chars:** ~1200 target
-**Style:** Insight post
+**Style:** Ranking post
 **Status:** draft — needs Pax review
