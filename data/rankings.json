@@ -1,0 +1,27 @@
+{
+  "week": "W12-2026",
+  "date": "2026-03-22",
+  "categories": {
+    "orchestration": [
+      {"name": "CrewAI", "score": 8.2, "trend": "up", "note": "Enterprise adoption accelerating"},
+      {"name": "LangGraph", "score": 7.8, "trend": "stable", "note": "LangChain ecosystem lock-in"},
+      {"name": "AutoGen", "score": 7.5, "trend": "up", "note": "Microsoft backing, multi-agent focus"}
+    ],
+    "code_native": [
+      {"name": "Claude Code", "score": 8.5, "trend": "up", "note": "Shipping real autonomous coding"},
+      {"name": "Devin", "score": 7.0, "trend": "stable", "note": "First-mover but competition closing"},
+      {"name": "OpenAI Codex", "score": 7.8, "trend": "up", "note": "Deep IDE integration"}
+    ],
+    "vertical": [
+      {"name": "Harvey AI", "score": 8.0, "trend": "up", "note": "Legal vertical leader"},
+      {"name": "Abridge", "score": 7.5, "trend": "stable", "note": "Healthcare documentation"},
+      {"name": "AlphaSense", "score": 7.3, "trend": "up", "note": "Financial research"}
+    ]
+  },
+  "insight": "Stack fragmentation into orchestration/execution/domain layers",
+  "sources": [
+    "https://www.crewai.com",
+    "https://www.langchain.com/langgraph",
+    "https://microsoft.github.io/autogen/"
+  ]
+}
