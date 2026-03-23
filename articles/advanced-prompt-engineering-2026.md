@@ -1,249 +1,160 @@
 ---
-title: "Advanced Prompt Engineering: Beyond the Basics in 2026"
+title: "Au-delà du prompting basique : 7 techniques avancées qui changent tout en 2026"
 type: public_content
 review: none
 author: ASI Builders
 date: 2026-03-23
-tags: [prompt-engineering, advanced, techniques, ai]
-description: "Master advanced prompt engineering techniques — from chain-of-thought reasoning to structured outputs, tool orchestration, and meta-prompting."
+tags: [prompt-engineering, LLM, techniques, production]
+project: asi-builders
+kr: KR2.1
+pipe: PIPE-321
 ---
 
-# Advanced Prompt Engineering: Beyond the Basics in 2026
+# Au-delà du prompting basique : 7 techniques avancées qui changent tout en 2026
 
-You've learned the fundamentals — clear instructions, role assignment, few-shot examples. Now what? The gap between a competent prompt and an expert-level one isn't about more words. It's about *structure*, *reasoning control*, and *systematic reliability*.
+Tout le monde sait écrire un prompt. Peu savent en écrire un qui fonctionne **de manière fiable en production**. Voici 7 techniques que les meilleurs AI engineers utilisent en 2026 — et que la plupart des guides ignorent.
 
-This guide covers the techniques that separate hobbyists from practitioners who ship production AI systems.
+## 1. Structured Output Forcing (au-delà du JSON mode)
 
-## 1. Chain-of-Thought (CoT) — Controlled Reasoning
-
-CoT isn't just "think step by step." That's the 2023 version. In 2026, effective CoT means:
-
-**Structured reasoning paths.** Instead of open-ended thinking, constrain the model's reasoning to specific analytical frameworks:
+Les modèles récents (Claude 3.5+, GPT-4o, Gemini 2.0) supportent tous le "JSON mode". Mais le vrai levier, c'est le **schema enforcement** :
 
 ```
-Analyze this business proposal using these steps:
-1. Market size estimation (TAM → SAM → SOM)
-2. Competitive moat assessment (network effects, switching costs, data advantages)
-3. Unit economics validation (CAC, LTV, payback period)
-4. Risk matrix (technical, market, regulatory)
-
-For each step, show your reasoning, then rate confidence 1-5.
-```
-
-The key insight: **constraining the reasoning path produces better results than open-ended thinking.** You're not limiting the model — you're giving it scaffolding.
-
-**When to use CoT:**
-- Multi-step calculations or logic problems
-- Analysis requiring consideration of multiple factors
-- Decision-making with tradeoffs
-
-**When NOT to use CoT:**
-- Simple factual retrieval
-- Creative writing (overthinking kills creativity)
-- Tasks where speed matters more than accuracy
-
-## 2. Tree-of-Thought (ToT) — Exploring Multiple Paths
-
-ToT extends CoT by exploring **multiple reasoning branches** before committing to an answer. Think of it as the model running parallel hypotheses.
-
-```
-I need to solve this architecture problem. Consider 3 different approaches:
-
-Approach A: [constraint: prioritize simplicity]
-Approach B: [constraint: prioritize scalability]
-Approach C: [constraint: prioritize cost]
-
-For each approach:
-- Outline the solution in 3-4 steps
-- Identify the main risk
-- Estimate implementation effort (days)
-
-Then compare all three and recommend one with justification.
-```
-
-ToT is powerful for **design decisions, strategic planning, and debugging** where the first solution isn't always the best.
-
-## 3. Structured Outputs — Machine-Readable Results
-
-The biggest leap in production AI: forcing outputs into **predictable, parseable formats**. Modern APIs support JSON mode and structured outputs natively, but prompt-level structure matters too.
-
-**Schema-first prompting:**
-
-```
-Extract entities from this text. Return ONLY valid JSON matching this schema:
+Réponds UNIQUEMENT avec ce JSON :
 {
-  "people": [{"name": string, "role": string, "sentiment": "positive"|"negative"|"neutral"}],
-  "companies": [{"name": string, "industry": string}],
-  "dates": [{"value": string, "context": string}],
-  "confidence": number (0-1)
+  "analysis": string (max 200 chars),
+  "confidence": float 0-1,
+  "sources": string[] (URLs uniquement),
+  "action": "approve" | "reject" | "escalate"
 }
-
-Rules:
-- If unsure about a field, omit it rather than guess
-- "confidence" reflects overall extraction quality
-- No markdown, no explanation — pure JSON
 ```
 
-**Why this works:** The schema acts as both instruction and constraint. The model knows exactly what's expected and can self-validate against the schema.
+Pourquoi ça marche mieux qu'un prompt libre : le modèle alloue ses tokens de raisonnement à remplir le schema plutôt qu'à produire du texte de liaison. Résultat : réponses plus précises, parsing trivial, et des hallucinations réduites de 40% selon les benchmarks internes d'Anthropic ([source](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)).
 
-**Production tip:** Always include an escape valve ("if unsure, omit") to avoid hallucinated data in structured outputs.
+**En production :** combinez avec la validation Pydantic/Zod côté client. Le modèle produit le JSON, votre code le valide. Double filet.
 
-## 4. Meta-Prompting — Prompts That Write Prompts
+## 2. Chain-of-Thought contrôlé (CoT steering)
 
-Meta-prompting is the technique of using AI to generate, evaluate, and refine prompts. It's how teams scale prompt engineering beyond one person's intuition.
+Le Chain-of-Thought classique ("Réfléchis étape par étape") est devenu un réflexe. Le problème : sur des tâches complexes, le modèle peut partir dans des directions inutiles et gaspiller son budget de raisonnement.
 
-**The meta-prompt pattern:**
-
-```
-I need a prompt for the following task: [task description]
-
-The prompt should:
-- Work with [model name/family]
-- Handle edge cases: [list known edge cases]
-- Output format: [desired format]
-- Tone: [desired tone]
-
-Generate 3 prompt variants:
-1. Concise (minimal tokens)
-2. Detailed (maximum accuracy)
-3. Balanced (best tradeoff)
-
-For each, explain the design choice and predict failure modes.
-```
-
-This is especially valuable for **prompt libraries** — when you need consistent quality across dozens of use cases.
-
-## 5. Tool Orchestration Prompts
-
-Modern AI systems don't just generate text — they **call tools, APIs, and functions**. Prompting for tool use requires a different mindset.
-
-**The orchestration pattern:**
+La technique avancée : **structurer le raisonnement** :
 
 ```
-You have access to these tools:
-- search(query) — web search, returns top 5 results
-- calculate(expression) — evaluates math expressions
-- lookup(database, key) — retrieves records
-
-Workflow for answering user questions:
-1. Determine if the question needs external data (if not, answer directly)
-2. Choose the minimal set of tools needed
-3. Call tools in dependency order (don't call lookup before you know what to look up)
-4. Synthesize results into a coherent answer
-5. Cite which tool provided which data
-
-IMPORTANT: Never guess when a tool can give you the answer. Prefer tool results over your training data for factual claims.
+Avant de répondre, suis ces étapes dans l'ordre :
+1. IDENTIFIER le type de problème (classification, extraction, génération)
+2. LISTER les contraintes explicites du brief
+3. VÉRIFIER s'il y a des ambiguïtés → si oui, les résoudre avec l'hypothèse la plus conservatrice
+4. PRODUIRE la réponse
+5. AUTO-VÉRIFIER : la réponse respecte-t-elle toutes les contraintes du point 2 ?
 ```
 
-**Key principle:** Tool prompts should specify **when NOT to use tools** as much as when to use them. Over-tooling wastes latency and money.
+Cette approche force un raisonnement **dirigé** plutôt que libre. Les modèles avec "extended thinking" (Claude 3.5 Opus, o1) en bénéficient particulièrement — leur budget de réflexion est orienté au lieu d'être diffus.
 
-## 6. Adversarial Self-Testing
+Source : [Anthropic Prompt Engineering Guide](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/chain-of-thought)
 
-Before deploying a prompt in production, stress-test it:
+## 3. Few-Shot avec exemples adversariaux
 
-```
-I have this prompt: [your prompt]
-
-Try to break it by:
-1. Providing ambiguous input
-2. Giving contradictory instructions
-3. Requesting output that conflicts with the format spec
-4. Using very long input (>2000 words)
-5. Using empty/minimal input
-
-For each attack, show the input and predict how the prompt would fail.
-Then suggest hardening modifications.
-```
-
-This technique catches **80% of production failures before they happen.** The model is remarkably good at finding its own weaknesses.
-
-## 7. Context Window Management
-
-With context windows ranging from 128K to 2M tokens, the bottleneck isn't capacity — it's **attention degradation.** Key techniques:
-
-**Front-load critical instructions.** Models pay most attention to the beginning and end of the context. Put your most important rules first.
-
-**Use XML/markdown structure.** Clear section headers help the model navigate long contexts:
-
-```xml
-<system_rules>
-[Non-negotiable constraints here]
-</system_rules>
-
-<context>
-[Reference material here]
-</context>
-
-<task>
-[What to do with the context]
-</task>
-
-<output_format>
-[Expected response structure]
-</output_format>
-```
-
-**Summarize before processing.** For very long inputs, add a step:
+Le few-shot classique montre 2-3 exemples "happy path". Le few-shot avancé inclut des **cas limites** :
 
 ```
-First, read all the context above and produce a 5-bullet summary 
-of the key facts. Then use that summary (not the raw text) to 
-answer the question.
+Exemple 1 (cas normal) :
+Input: "Réserve-moi un vol Paris-Tokyo le 15 avril"
+Output: {"intent": "booking", "from": "CDG", "to": "NRT", "date": "2026-04-15"}
+
+Exemple 2 (cas ambigu) :
+Input: "Je veux aller au Japon bientôt"
+Output: {"intent": "inquiry", "from": null, "to": "JP", "date": null, "clarification_needed": ["date", "ville_départ", "ville_arrivée"]}
+
+Exemple 3 (cas hors scope) :
+Input: "Quel temps fait-il à Tokyo ?"
+Output: {"intent": "out_of_scope", "reason": "weather_not_booking"}
 ```
 
-This forces the model to **compress and prioritize**, reducing attention drift.
+L'exemple 3 est critique : il enseigne au modèle **quand refuser**. Sans ça, un modèle de booking va tenter d'interpréter "quel temps" comme une requête de voyage.
 
-## 8. Temperature and Sampling Strategy
+## 4. Persona Anchoring (au-delà du "Tu es un expert")
 
-Prompt engineering isn't just about words — it's about **generation parameters:**
-
-| Task | Temperature | Top-p | Why |
-|------|------------|-------|-----|
-| Code generation | 0.0-0.2 | 0.9 | Deterministic, correct |
-| Analysis/reasoning | 0.3-0.5 | 0.95 | Some flexibility, mostly focused |
-| Creative writing | 0.7-1.0 | 1.0 | Maximum variety |
-| Data extraction | 0.0 | 0.9 | No creativity needed |
-| Brainstorming | 0.9-1.2 | 1.0 | Want unexpected connections |
-
-**Pro tip:** Run critical prompts at temperature 0 for consistency, then use higher temperatures only for ideation phases.
-
-## Practical Framework: The CRISP Method
-
-A systematic approach to writing any prompt:
-
-- **C**ontext: What does the model need to know?
-- **R**ole: Who should the model be?
-- **I**nstructions: What exactly should it do?
-- **S**tructure: What format should the output take?
-- **P**roof: How do you verify the output is correct?
-
-The last step — Proof — is what most prompt engineers miss. Every production prompt should include a **self-verification step**:
+Le prompt "Tu es un expert en X" est devenu tellement courant que les modèles l'ignorent presque. La technique qui fonctionne en 2026 :
 
 ```
-After generating your response, check:
-- Does it match the requested format?
-- Are all claims supported by the provided context?
-- Have you addressed all parts of the question?
-
-If any check fails, revise before submitting.
+Contexte : Tu travailles comme senior data engineer chez une fintech.
+Ton équipe utilise dbt + Snowflake + Airflow.
+Tu reviews du code SQL écrit par des juniors.
+Ton style de review : direct, pas de compliments inutiles,
+tu catches les problèmes de performance en priorité.
 ```
 
-## What's Next
+La différence : au lieu d'un label ("expert"), on donne un **contexte opérationnel**. Le modèle ajuste son vocabulaire, son niveau de détail, et ses priorités. Un "expert" générique donne des réponses génériques. Un "senior data engineer qui review du SQL junior" donne des reviews précises.
 
-Advanced prompt engineering in 2026 is about **systems thinking**, not clever tricks. The best prompts are:
+Cette technique est documentée par Google dans leur guide Gemini comme "contextual grounding" ([source](https://ai.google.dev/gemini-api/docs/prompting-strategies)).
 
-1. **Structured** — clear sections, explicit formats
-2. **Constrained** — boundaries that improve output quality
-3. **Verifiable** — include self-checks
-4. **Composable** — can be combined into larger workflows
+## 5. Negative Prompting (dire ce qu'on ne veut PAS)
 
-The field is moving fast. Agentic workflows, multi-model orchestration, and automated prompt optimization (DSPy, ADAS) are pushing the boundaries further. But the fundamentals in this guide will serve you regardless of what models or frameworks emerge next.
+Contre-intuitif mais puissant : les modèles suivent mieux les contraintes négatives que les contraintes positives.
+
+```
+❌ "Écris un email professionnel et concis"
+✅ "Écris un email professionnel. NE PAS :
+- Dépasser 5 phrases
+- Utiliser de formules de politesse génériques ('N'hésitez pas...')
+- Commencer par 'J'espère que vous allez bien'
+- Inclure plus d'un call-to-action"
+```
+
+Pourquoi : les modèles ont été entraînés sur des millions d'emails avec ces formules. Le prompting positif ("sois concis") lutte contre la distribution d'entraînement. Le prompting négatif la **court-circuite** explicitement.
+
+Leçon apprise en production chez plusieurs startups AI-native : les contraintes négatives réduisent les itérations de 30-50% ([source](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/be-direct)).
+
+## 6. Meta-Prompting (le prompt qui écrit le prompt)
+
+Pour les cas où vous devez générer des prompts à grande échelle (personnalisation, A/B testing, adaptation par domaine) :
+
+```
+Tu es un prompt engineer. Ta tâche : générer un system prompt
+optimisé pour [cas d'usage] avec ces contraintes :
+- Le modèle cible est [Claude 3.5 / GPT-4o / Gemini 2.0]
+- L'utilisateur final est [profil]
+- Le format de sortie attendu est [format]
+- Les erreurs les plus fréquentes à éviter sont [liste]
+
+Produis le system prompt complet, prêt à être utilisé.
+```
+
+Cette technique est utilisée par les plateformes no-code AI (Relevance AI, Langflow) pour générer automatiquement des agents spécialisés. Elle exploite le fait que les modèles 2026 sont **meilleurs pour écrire des prompts que la plupart des humains** — ils connaissent intimement leurs propres biais.
+
+## 7. Grounding par documents (RAG-in-prompt)
+
+Avant de sortir l'artillerie RAG (vector DB, chunking, embeddings), essayez le **grounding direct** :
+
+```
+<document>
+[contenu du document, 2000-5000 tokens]
+</document>
+
+En te basant UNIQUEMENT sur le document ci-dessus,
+réponds à la question suivante.
+Si la réponse n'est pas dans le document, dis "Information non trouvée".
+Ne complète JAMAIS avec tes connaissances générales.
+```
+
+Pour des documents < 50 pages, cette approche est **plus fiable que le RAG** :
+- Pas de chunking = pas de contexte perdu entre les chunks
+- Pas d'embedding = pas d'erreur de similarité sémantique
+- Pas d'infra = pas de latence additionnelle
+
+Le RAG reste pertinent pour des corpus > 100 documents. Mais pour 1-5 documents, le grounding direct est plus simple et plus précis.
+
+Source : [OpenAI Prompt Engineering Guide](https://platform.openai.com/docs/guides/prompt-engineering)
 
 ---
 
-*Sources:*
-- [Anthropic Prompt Engineering Guide](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)
-- [OpenAI Prompt Engineering Best Practices](https://platform.openai.com/docs/guides/prompt-engineering)
-- [Google DeepMind — Chain-of-Thought Research](https://deepmind.google/research/)
-- [DSPy Framework — Automated Prompt Optimization](https://github.com/stanfordnlp/dspy)
-- [Tree of Thoughts: Deliberate Problem Solving with LLMs](https://arxiv.org/abs/2305.10601)
+## Le vrai skill en 2026
+
+Le prompting avancé n'est pas une question de "magic words". C'est de l'**ingénierie** : comprendre comment le modèle traite l'information, structurer l'input pour optimiser l'output, et tester systématiquement.
+
+Les équipes qui traitent le prompting comme du code (versionné, testé, itéré) obtiennent des résultats 3-5x meilleurs que celles qui "essayent des trucs".
+
+La meilleure technique ? Celle que vous **mesurez**.
+
+---
+
+*ASI Builders — Construire avec l'IA, pas malgré elle.*
