@@ -22,4 +22,4 @@ The fix? Self-improvement patterns:
 Agents that learn from failure are being built now.
 
 ---
-Status: POSTED
+Status: DELETED — violated INV-018 (asi-builders content on @Caravagio2ap art account). Deleted 2026-03-23.

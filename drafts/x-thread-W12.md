@@ -19,5 +19,5 @@ format: thread (individual tweets — no native threading)
 5. https://x.com/Caravagio2ap/status/1903005180177690803 (pattern libraries)
 
 ## Note
-Posted as individual tweets (x_post skill lacks reply_to support).
-Thread format would improve engagement — propose adding reply_to to x_post skill.
+DELETED 2026-03-23 — violated INV-018 (asi-builders content on @Caravagio2ap art account).
+All 5 tweets removed. ASI Builders needs its own X account to post this content.
